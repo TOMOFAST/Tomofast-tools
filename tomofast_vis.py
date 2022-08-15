@@ -16,6 +16,7 @@ import matplotlib.colorbar as cbar
 def draw_model(grid, model, title):
     '''
     Draw the model slice.
+    Note: the input grid should be a 2D grid corresponding to the model slice.
     '''
     nelements = model.shape[0]
 
@@ -109,7 +110,7 @@ def main():
     nelements = nx * ny * nz
 
     # Reading the model grid.
-    model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5), skiprows=1)
+    model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5,6), skiprows=1)
     model_indexes = np.loadtxt(filename_model_grid, dtype=int, usecols=(7,8,9), skiprows=1)
 
     # Revert Z-axis.
@@ -126,15 +127,18 @@ def main():
     #----------------------------------------------------------------------------------
     # Extract the model slices.
     #----------------------------------------------------------------------------------
+
     # Extract the YZ profile.
     nx_slice = 1
     slice_filter = (model_indexes[:, 0] == nx_slice)
 
-    print(slice_filter.shape)
-
     model_grid_slice = model_grid[slice_filter]
+
+    # When available the true model is stored in the grid file (7th column).
+    true_model_slice = model_grid_slice[:, 6]
+
     # Remove X-data.
-    model_grid_slice = model_grid_slice[:, 2:]
+    model_grid_slice = model_grid_slice[:, 2:6]
 
     model_final_slice = model_final[slice_filter]
 
@@ -142,10 +146,9 @@ def main():
     # Drawing the model.
     #----------------------------------------------------------------------------------
     grid = model_grid_slice
-    model = model_final_slice
 
-    draw_model(grid, model, "Final model.")
-
+    draw_model(grid, true_model_slice, "True model.")
+    draw_model(grid, model_final_slice, "Final model.")
 
 #=============================================================================
 if __name__ == "__main__":
