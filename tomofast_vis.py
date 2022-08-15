@@ -6,6 +6,7 @@ Author: Vitaliy Ogarko
 
 import numpy as np
 import matplotlib.pylab as pl
+import matplotlib as mpl
 
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
@@ -135,8 +136,10 @@ def main():
     currentAxis.add_collection(patches_collection)
 
     # Show the colorbar.
-    cax, _ = cbar.make_axes(currentAxis) 
-    cb2 = cbar.ColorbarBase(cax, cmap=cmap)
+    cax, _ = cbar.make_axes(currentAxis)
+    # Set the correct colorbar scale.
+    norm = mpl.colors.Normalize(vmin=val_min, vmax=val_max)
+    cb2 = cbar.ColorbarBase(cax, cmap=cmap, norm=norm)
 
     pl.show()
 
