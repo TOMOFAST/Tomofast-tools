@@ -5,7 +5,7 @@ Author: Vitaliy Ogarko
 '''
 
 import numpy as np
-import matplotlib.pylab as pl
+import matplotlib.pyplot as pl
 import matplotlib as mpl
 
 from matplotlib.patches import Rectangle
