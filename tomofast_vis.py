@@ -20,9 +20,9 @@ def draw_model(grid, model, title):
     '''
     nelements = model.shape[0]
 
-    pl.rcParams["figure.figsize"] = (12.8, 9.6) # Default size = (6.4, 4.8)
+    pl.figure(figsize=(12.8, 9.6))
 
-    # Makes the same scale for x and y axis.
+     # Makes the same scale for x and y axis.
     pl.axis('scaled')
 
     x_min = np.min(grid[:, 0:2])
@@ -85,6 +85,25 @@ def draw_model(grid, model, title):
 
     pl.show()
 
+    pl.close(pl.gcf())
+
+def draw_data(data_obs, data_calc, profile_coord):
+    '''
+    Draw the data.
+
+    profile_coord = 0, 1, 2, for x, y, z profiles.
+    '''
+    # Increasing the figure size.
+    #pl.figure(figsize=(12.8, 9.6))
+
+    pl.plot(data_obs[:, profile_coord], data_obs[:, 3], '--bo', label='Observed data')
+    pl.plot(data_calc[:, profile_coord], data_calc[:, 3], '--ro', label='Calculated data')
+
+    pl.legend(loc="upper left")
+
+    pl.show()
+    pl.close(pl.gcf())
+
 #=============================================================================
 def main():
     print('Started tomofast_vis.')
@@ -103,6 +122,12 @@ def main():
 
     # Path to the output model after inversion.
     filename_model_final = '../Tomofast-x/Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
+
+    # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
+    filename_data_observed = '../Tomofast-x/Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
+
+    # Path to calculated data after inversion.
+    filename_data_calculated = '../Tomofast-x/Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
 
     #----------------------------------------------------------------------------------
     # Reading data.
@@ -124,6 +149,12 @@ def main():
 
     assert nelements == model_final.shape[0], "Wrong final model dimensions!"
 
+    # Reading data.
+    data_observed = np.loadtxt(filename_data_observed, dtype=float, usecols=(0,1,2,3), skiprows=1)
+    data_calculated = np.loadtxt(filename_data_calculated, dtype=float, usecols=(0,1,2,3), skiprows=1)
+
+    print("ndata =", data_observed.shape[0])
+
     #----------------------------------------------------------------------------------
     # Extract the model slices.
     #----------------------------------------------------------------------------------
@@ -137,18 +168,48 @@ def main():
     # When available the true model is stored in the grid file (7th column).
     true_model_slice = model_grid_slice[:, 6]
 
-    # Remove X-data.
-    model_grid_slice = model_grid_slice[:, 2:6]
+    # Grid slice dimensions.
+    grid_slice_x_min = np.min(model_grid_slice[:, 0:2])
+    grid_slice_x_max = np.max(model_grid_slice[:, 0:2])
+    grid_slice_y_min = np.min(model_grid_slice[:, 2:4])
+    grid_slice_y_max = np.max(model_grid_slice[:, 2:4])
+
+    print("Grid slice dimenion (X): ", grid_slice_x_min, grid_slice_x_max)
+    print("Grid slice dimenion (Y): ", grid_slice_y_min, grid_slice_y_max)
+
+    # Remove grid X-data.
+    model_grid_slice_2d = model_grid_slice[:, 2:6]
 
     model_final_slice = model_final[slice_filter]
 
     #----------------------------------------------------------------------------------
     # Drawing the model.
     #----------------------------------------------------------------------------------
-    grid = model_grid_slice
+    grid = model_grid_slice_2d
 
     draw_model(grid, true_model_slice, "True model.")
     draw_model(grid, model_final_slice, "Final model.")
+
+    #----------------------------------------------------------------------------------
+    # Extract data slice.
+    #----------------------------------------------------------------------------------
+    # Select the data located above the model grid slice.
+    data_filter_x = np.logical_and(data_observed[:, 0] >= grid_slice_x_min, data_observed[:, 0] <= grid_slice_x_max)
+    data_filter_y = np.logical_and(data_observed[:, 1] >= grid_slice_y_min, data_observed[:, 1] <= grid_slice_y_max)
+    data_filter = np.logical_and(data_filter_x, data_filter_y)
+
+    data_observed_slice = data_observed[data_filter, :]
+    data_calculated_slice = data_calculated[data_filter, :]
+
+    print("ndata slice =", data_observed_slice.shape[0])
+
+    #----------------------------------------------------------------------------------
+    # Drawing the data.
+    #----------------------------------------------------------------------------------
+    # YZ profile.
+    profile_coord = 1
+
+    draw_data(data_observed_slice, data_calculated_slice, profile_coord)
 
 #=============================================================================
 if __name__ == "__main__":
