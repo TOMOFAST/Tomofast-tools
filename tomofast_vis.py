@@ -118,16 +118,16 @@ def main():
     nz = 32
 
     # Path to input model grid (modelGrid.grav.file parameter in the Parfile).
-    filename_model_grid = '../Tomofast-x/Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
+    filename_model_grid = './Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
 
     # Path to the output model after inversion.
-    filename_model_final = '../Tomofast-x/Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
+    filename_model_final = './Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
 
     # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
-    filename_data_observed = '../Tomofast-x/Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
+    filename_data_observed = './Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
 
     # Path to calculated data after inversion.
-    filename_data_calculated = '../Tomofast-x/Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
+    filename_data_calculated = './Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
 
     #----------------------------------------------------------------------------------
     # Reading data.
