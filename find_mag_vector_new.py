@@ -17,7 +17,22 @@ def convert_geosph2sph(vec:list):
     vec[2] = -vec[2] + 90
 
 def convert_deg2rad(deg):
-    return math.pi/180 * float(deg)
+    return math.pi / 180. * float(deg)
+
+def to_cartesian(ampl, I, D):
+    '''
+    Convert a vector to cartesion frame, with Z pointing upwards, X = East, Y = North.
+    Input: I, D are inclination and declination in degrees.
+    '''
+    # Convert degrees to radians.
+    I = convert_deg2rad(I)
+    D = convert_deg2rad(D)
+
+    x = ampl * math.cos(I) * math.sin(D)
+    y = ampl * math.cos(I) * math.cos(D)
+    z = ampl * math.sin(-I)
+
+    return (x, y, z)
 
 def main(induced:list, remanentv:list, use_old_conversion=False):
     # angles are in deg
@@ -27,6 +42,7 @@ def main(induced:list, remanentv:list, use_old_conversion=False):
     # induced input form: (amplitude, inclination, declination)
     # remenantv input form: list of vectors
     # indiv remenant form: (Q factor, inclination, declination, susceptibility)
+    print('use_old_conversion:', use_old_conversion)
 
     if use_old_conversion:
         convert_geosph2sph(induced)
@@ -34,44 +50,42 @@ def main(induced:list, remanentv:list, use_old_conversion=False):
         iy =  math.sin(convert_deg2rad(induced[1])) * math.sin(convert_deg2rad(induced[2]))
         iz =  math.cos(convert_deg2rad(induced[1]))
     else:
-        ix =  math.cos(convert_deg2rad(induced[1])) * math.cos(convert_deg2rad(induced[2]))
-        iy =  math.cos(convert_deg2rad(induced[1])) * math.sin(convert_deg2rad(induced[2]))
-        iz =  math.sin(convert_deg2rad(induced[1]))
+        ix, iy, iz = to_cartesian(1., induced[1], induced[2])
 
-    print('Inducing Vector:', iy, ix, -1*iz)
+    print('Inducing Vector:', iy, ix, iz)
 
     for remanent in remanentv:
         if len(remanent) == 4:
             k = remanent.pop(-1)
         else:
             k = 0.01
-        
-        
-        
+
         print("Q: {} INCL: {}deg DECL: {}deg SUSC: {}SI".format(*remanent, k))
 
         AMPL = remanent[0] #* induced[0]
-        
+
         if use_old_conversion:
             convert_geosph2sph(remanent)
             rx = AMPL * math.sin(convert_deg2rad(remanent[1])) * math.cos(convert_deg2rad(remanent[2]))
             ry = AMPL * math.sin(convert_deg2rad(remanent[1])) * math.sin(convert_deg2rad(remanent[2]))
             rz = AMPL * math.cos(convert_deg2rad(remanent[1]))
         else:
-            rx = AMPL * math.cos(convert_deg2rad(remanent[1])) * math.cos(convert_deg2rad(remanent[2]))
-            ry = AMPL * math.cos(convert_deg2rad(remanent[1])) * math.sin(convert_deg2rad(remanent[2]))
-            rz = AMPL * math.sin(convert_deg2rad(remanent[1]))
-        
-        print(ry, rx, -1*rz, '\n', iy, ix, -1*iz)
-        
-        
+            rx, ry, rz = to_cartesian(AMPL, remanent[1], remanent[2])
+
+        print(ry, rx, rz, '\n', iy, ix, iz)
+
         mx = ix + rx
         my = iy + ry
         mz = iz + rz
-        
-        mx *= k * induced[0]
-        my *= k * induced[0]
-        mz *= k * induced[0]
+
+        # Vacuum permiability.
+        mu0 = 4. * math.pi * 1.e-7
+        # Nanotesla to tesla conversion factor.
+        nt2t = 1.e-9
+
+        mx *= k * induced[0] / mu0 * nt2t
+        my *= k * induced[0] / mu0 * nt2t
+        mz *= k * induced[0] / mu0 * nt2t
 
         if use_old_conversion:
             # added conversions so numbers match those inside magnetic_field.f90 
@@ -84,9 +98,9 @@ def main(induced:list, remanentv:list, use_old_conversion=False):
             print("output form: Mx My Mz", "{} {} {}".format(my, mx, mz), '\n')
 
 if __name__ == '__main__':    
-    INDUCED = [55000, -60, 2]
+    INDUCED = [55000., -60., 2.]
     REMANENTS = [
-        [0, -60, 2, 0.01]
+        [0., -60., 2., 0.01]
     ]
 
     main(INDUCED, REMANENTS)
