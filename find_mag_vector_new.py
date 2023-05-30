@@ -78,7 +78,7 @@ def main(induced:list, remanentv:list, use_old_conversion=False):
         my = iy + ry
         mz = iz + rz
 
-        # Vacuum permiability.
+        # Vacuum permeability.
         mu0 = 4. * math.pi * 1.e-7
         # Nanotesla to tesla conversion factor.
         nt2t = 1.e-9
@@ -95,7 +95,7 @@ def main(induced:list, remanentv:list, use_old_conversion=False):
         else:
             # mx and my remains as they are
             # mz not mirrored
-            print("output form: Mx My Mz", "{} {} {}".format(my, mx, mz), '\n')
+            print("output form: Mx My Mz", "{} {} {}".format(mx, my, mz), '\n')
 
 if __name__ == '__main__':    
     INDUCED = [55000., -60., 2.]
