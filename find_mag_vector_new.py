@@ -30,7 +30,7 @@ def to_cartesian(ampl, I, D):
 
     x = ampl * math.cos(I) * math.sin(D)
     y = ampl * math.cos(I) * math.cos(D)
-    z = ampl * math.sin(-I)
+    z = ampl * math.sin(I)
 
     return (x, y, z)
 
