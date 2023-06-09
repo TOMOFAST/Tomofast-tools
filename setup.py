@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='tomofast_tools',
+    name='tomofasttools',
     version='1.0.0',
     url='https://github.com/TOMOFAST/Tomofast-tools.git',
     description='Tools for Tomofast-x code',
