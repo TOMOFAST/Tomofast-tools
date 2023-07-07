@@ -3,7 +3,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import os
 
-
 @dataclass
 class TomofastxSensit:
     nx: int
@@ -13,8 +12,47 @@ class TomofastxSensit:
     matrix: object
     weight: object
 
+#=========================================================================================
+def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
+    """
+    Writes a scipy csr_matrix matrix to the Tomofast-x format.
+    """
+    # Some additional metadat needed in Tomofast-x.
+    MATRIX_PRECISION = 4
+    compression_type = 0
+    comp_error = 0.
+    nmodel_components = 1
+    ndata_components = 1
 
-# =========================================================================================
+    nel_total = nx * ny * nz
+    nnz_total = matrix.data.size
+
+    print('nel_total =', nel_total)
+    print('nnz_total =', nnz_total)
+
+    # Parallel matrix partitioning arrays.
+    nnz_at_cpu_new = np.ndarray(shape=(nbproc), dtype=np.int32)
+    nelements_at_cpu_new = np.ndarray(shape=(nbproc), dtype=np.int32)
+
+    # TODO: Adjust for nbproc > 1.
+    nnz_at_cpu_new[0] = nnz_total
+    nelements_at_cpu_new[0] = nel_total
+
+    # Metadata file.
+    filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.dat"
+    # Depth weight file.
+    filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
+
+    #----------------------------------------------------------
+    # Reading the metadata.
+    with open(filename_metadata, "w") as f:
+        f.write("{} {} {} {} {} {}\n".format(nx, ny, nz, ndata, nbproc, MATRIX_PRECISION))
+        f.write("{} {}\n".format(compression_type, comp_error))
+        f.write("{} {}\n".format(nmodel_components, ndata_components))
+        np.savetxt(f, (nnz_at_cpu_new,), fmt="%d")
+        np.savetxt(f, (nelements_at_cpu_new,), fmt="%d")
+
+#=========================================================================================
 def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     """
     Loads the sensitivity kernel from Tomofast-x and stores it in the CSR sparse matrix.
@@ -25,7 +63,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     # Depth weight file.
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
 
-    # ----------------------------------------------------------
+    #----------------------------------------------------------
     # Reading the metadata.
     with open(filename_metadata, "r") as f:
         lines = f.readlines()
@@ -68,14 +106,14 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
         if verbose:
             print("nel_total =", nel_total)
 
-    # ----------------------------------------------------------
+    #----------------------------------------------------------
     # Reading depth weight.
     with open(filename_weight, "r") as f:
         # Note using '>' for big-endian.
         header = np.fromfile(f, dtype='>i4', count=5)
         weight = np.fromfile(f, dtype='>f8', count=nel_total)
 
-    # ----------------------------------------------------------
+    #----------------------------------------------------------
     # Define spase matrix data arrays.
     csr_dat = np.ndarray(shape=(nel_total), dtype=np.float32)
     csr_row = np.ndarray(shape=(nel_total), dtype=np.int32)
@@ -129,7 +167,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
                 csr_dat[s:e] = dat
 
                 nel_current = nel_current + nel
-    # ----------------------------------------------------------
+    #----------------------------------------------------------
     if verbose:
         print('ndata_all =', ndata_all)
 
@@ -152,8 +190,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
 
     return sensit
 
-
-# =========================================================================================
+#=========================================================================================
 def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     """
     Write Tomofast-x model grid.
@@ -172,8 +209,7 @@ def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
         np.savetxt(file, line_data, fmt="%f %f %f %f %f %f %f %d %d %d")
     file.close()
 
-
-# =========================================================================================
+#=========================================================================================
 def write_tomofast_data_grid(data_coords, data_vals, output_folder="tomofast_grids"):
     """
     Write Tomofast-x data grid with values.
@@ -199,8 +235,7 @@ def write_tomofast_data_grid(data_coords, data_vals, output_folder="tomofast_gri
         np.savetxt(file, data_array)
     file.close()
 
-
-# =========================================================================================
+#=========================================================================================
 def read_tomofast_data(grav_data, filename, data_type):
     """
     Read data and grid stored in Tomofast-x format.
@@ -218,8 +253,7 @@ def read_tomofast_data(grav_data, filename, data_type):
     grav_data.y_data = data[:, 1]
     grav_data.z_data = data[:, 2]
 
-
-# =========================================================================================
+#=========================================================================================
 def read_tomofast_model(filename, mpars):
     """
     Read model values and model grid stored in Tomofast-x format.
@@ -250,8 +284,7 @@ def read_tomofast_model(filename, mpars):
 
     return m_inv, mpars
 
-
-# =========================================================================================
+#=========================================================================================
 def Haar3D(s, n1, n2, n3):
     """
     Forward Haar wavelet transform.
@@ -275,7 +308,7 @@ def Haar3D(s, n1, n2, n3):
             ng = int((ngmax - ngmin) / step_incr) + 1
             step2 = step_incr
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Predict.
             ig = ngmin - 1
             il = 0
@@ -290,7 +323,7 @@ def Haar3D(s, n1, n2, n3):
                 il = il + step2
                 ig = ig + step2
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Update.
             ig = ngmin - 1
             il = 0
@@ -305,7 +338,7 @@ def Haar3D(s, n1, n2, n3):
                 il = il + step2
                 ig = ig + step2
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Normalization.
             ig = ngmin - 1
             il = 0
@@ -323,8 +356,7 @@ def Haar3D(s, n1, n2, n3):
                 il = il + step2
                 ig = ig + step2
 
-
-# =========================================================================================
+#=========================================================================================
 def iHaar3D(s, n1, n2, n3):
     """
     Inverse Haar wavelet transform.
@@ -348,7 +380,7 @@ def iHaar3D(s, n1, n2, n3):
             ng = int((ngmax - ngmin) / step_incr) + 1
             step2 = step_incr
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Normalization.
             ig = ngmin - 1
             il = 0
@@ -366,7 +398,7 @@ def iHaar3D(s, n1, n2, n3):
                 il = il + step2
                 ig = ig + step2
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Update.
             ig = ngmin - 1
             il = 0
@@ -381,7 +413,7 @@ def iHaar3D(s, n1, n2, n3):
                 il = il + step2
                 ig = ig + step2
 
-            # ---------------------------------------------------
+            #---------------------------------------------------
             # Predict.
             ig = ngmin - 1
             il = 0
@@ -395,3 +427,34 @@ def iHaar3D(s, n1, n2, n3):
 
                 il = il + step2
                 ig = ig + step2
+
+#=========================================================================================
+def test_write_sensit_to_tomofastx():
+    """
+    Testing the write_sensit_to_tomofastx() function.
+    """
+    sensit_path = "./"
+    nx = 3
+    ny = 3
+    nz = 3
+    ndata = 10
+    nbproc = 1
+
+    nel_total = nx * ny * nz
+
+    matrix_np = np.ndarray(shape=(ndata, nel_total), dtype=np.float32)
+
+    matrix_np[:, :] = 5.
+    matrix_np[0, :] = 0.
+    matrix_np[:, 0] = 0.
+
+    print(matrix_np.shape)
+
+    # Create a scipy sparse matrix from dense ndarray.
+    matrix = csr_matrix(matrix_np)
+
+    write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc)
+
+#=========================================================================================
+if __name__ == "__main__":
+    test_write_sensit_to_tomofastx()
