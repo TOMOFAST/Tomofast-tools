@@ -150,6 +150,9 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
                 col = matrix.indices[s:e]
                 dat = matrix.data[s:e]
 
+                # Shift column indexes to convert from Python to Fortran array index.
+                col = col + 1
+
                 # Convert to big-endian.
                 col = col.astype('>i4')
                 dat = dat.astype('>f4')
