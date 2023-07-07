@@ -14,11 +14,11 @@ class TomofastxSensit:
     weight: object
 
 #=========================================================================================
-def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
+def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc):
     """
     Writes a scipy csr_matrix matrix to the Tomofast-x format.
     """
-    # Some additional metadat needed in Tomofast-x.
+    # Some additional metadata needed in Tomofast-x.
     MATRIX_PRECISION = 4
     compression_type = 0
     comp_error = 0.
@@ -45,7 +45,7 @@ def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
 
     #----------------------------------------------------------
-    # Reading the metadata.
+    # Writing the metadata.
     #----------------------------------------------------------
     with open(filename_metadata, "w") as f:
         f.write("{} {} {} {} {} {}\n".format(nx, ny, nz, ndata, nbproc, MATRIX_PRECISION))
@@ -54,8 +54,26 @@ def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
         np.savetxt(f, (nnz_at_cpu_new,), fmt="%d")
         np.savetxt(f, (nelements_at_cpu_new,), fmt="%d")
 
+    print("Metadata file is written to:", filename_metadata)
+
     #----------------------------------------------------------
-    # Reading the matrix.
+    # Writing the depth weight.
+    #----------------------------------------------------------
+    with open(filename_weight, "wb") as f:
+        depth_weighting_type = 1
+        # Write a header.
+        f.write(struct.pack('>iiiii', nx, ny, nz, ndata, depth_weighting_type))
+
+        # Convert to big-endian.
+        weight = weight.astype('>f4')
+
+        # Write weight to file.
+        f.write(weight.tobytes())
+
+    print("Weight file is written to:", filename_weight)
+
+    #----------------------------------------------------------
+    # Writing the matrix.
     #----------------------------------------------------------
     nel_current = 0
     ndata_all = 0
@@ -108,6 +126,8 @@ def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
                 f.write(dat.tobytes())
 
                 nel_current = nel_current + nel
+
+        print("Sensitivity file is written to:", filename_sensit)
 
 #=========================================================================================
 def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
@@ -492,7 +512,7 @@ def test_write_sensit_to_tomofastx():
     """
     Testing the write_sensit_to_tomofastx() function.
     """
-    sensit_path = "./"
+    sensit_path = "."
     nx = 3
     ny = 3
     nz = 3
@@ -512,7 +532,11 @@ def test_write_sensit_to_tomofastx():
     # Create a scipy sparse matrix from dense ndarray.
     matrix = csr_matrix(matrix_np)
 
-    write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc)
+    # Depth weight array.
+    weight = np.ndarray(shape=(nel_total), dtype=np.float32)
+    weight[:] = 1.
+
+    write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc)
 
 #=========================================================================================
 if __name__ == "__main__":
