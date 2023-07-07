@@ -101,23 +101,23 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
 
         # The number of non-zero values.
         # NOTE: It should be lines[1] for Tomofast-x v.1.6
-        nel_total = sum(map(int, lines[3].split()))
+        nnz_total = sum(map(int, lines[3].split()))
 
         if verbose:
-            print("nel_total =", nel_total)
+            print("nnz_total =", nnz_total)
 
     #----------------------------------------------------------
     # Reading depth weight.
     with open(filename_weight, "r") as f:
         # Note using '>' for big-endian.
         header = np.fromfile(f, dtype='>i4', count=5)
-        weight = np.fromfile(f, dtype='>f8', count=nel_total)
+        weight = np.fromfile(f, dtype='>f8', count=nnz_total)
 
     #----------------------------------------------------------
     # Define spase matrix data arrays.
-    csr_dat = np.ndarray(shape=(nel_total), dtype=np.float32)
-    csr_row = np.ndarray(shape=(nel_total), dtype=np.int32)
-    csr_col = np.ndarray(shape=(nel_total,), dtype=np.int32)
+    csr_dat = np.ndarray(shape=(nnz_total), dtype=np.float32)
+    csr_row = np.ndarray(shape=(nnz_total), dtype=np.int32)
+    csr_col = np.ndarray(shape=(nnz_total,), dtype=np.int32)
 
     nel_current = 0
     ndata_all = 0
