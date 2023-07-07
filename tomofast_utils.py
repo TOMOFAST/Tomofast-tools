@@ -44,6 +44,9 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
     # Depth weight file.
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
 
+    # Create the output sensit folder.
+    os.makedirs(os.path.dirname(filename_metadata), exist_ok=True)
+
     #----------------------------------------------------------
     # Writing the metadata.
     #----------------------------------------------------------
@@ -512,7 +515,7 @@ def test_write_sensit_to_tomofastx():
     """
     Testing the write_sensit_to_tomofastx() function.
     """
-    sensit_path = "."
+    sensit_path = "./SENSIT"
     nx = 3
     ny = 3
     nz = 3
@@ -526,8 +529,6 @@ def test_write_sensit_to_tomofastx():
     matrix_np[:, :] = 5.
     matrix_np[:, 0] = 0.
     matrix_np[:, 5] = 0.
-
-    print(matrix_np.shape)
 
     # Create a scipy sparse matrix from dense ndarray.
     matrix = csr_matrix(matrix_np)
