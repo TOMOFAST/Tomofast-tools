@@ -108,13 +108,15 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
 
     #----------------------------------------------------------
     # Reading depth weight.
+    nel_total = nx * ny * nz
     with open(filename_weight, "r") as f:
         # Note using '>' for big-endian.
         header = np.fromfile(f, dtype='>i4', count=5)
-        weight = np.fromfile(f, dtype='>f8', count=nnz_total)
+        weight = np.fromfile(f, dtype='>f8', count=nel_total)
 
     #----------------------------------------------------------
     # Define spase matrix data arrays.
+    # Note we a matrix constructor where the csr_row stores row indexes of all elements: a[row_ind[k], col_ind[k]] = data[k].
     csr_dat = np.ndarray(shape=(nnz_total), dtype=np.float32)
     csr_row = np.ndarray(shape=(nnz_total), dtype=np.int32)
     csr_col = np.ndarray(shape=(nnz_total,), dtype=np.int32)
