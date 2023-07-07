@@ -68,7 +68,7 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
         f.write(struct.pack('>iiiii', nx, ny, nz, ndata, depth_weighting_type))
 
         # Convert to big-endian.
-        weight = weight.astype('>f4')
+        weight = weight.astype('>f8')
 
         # Write weight to file.
         f.write(weight.tobytes())
@@ -516,17 +516,20 @@ def test_write_sensit_to_tomofastx():
     Testing the write_sensit_to_tomofastx() function.
     """
     sensit_path = "./SENSIT"
-    nx = 3
-    ny = 3
-    nz = 3
-    ndata = 10
+    nx = 2
+    ny = 128
+    nz = 32
+    ndata = 256
     nbproc = 1
 
     nel_total = nx * ny * nz
 
     matrix_np = np.ndarray(shape=(ndata, nel_total), dtype=np.float32)
 
-    matrix_np[:, :] = 5.
+    # Put some matrix values.
+    for i in range(ndata):
+        matrix_np[i, :] = float(i + 1)
+
     matrix_np[:, 0] = 0.
     matrix_np[:, 5] = 0.
 
