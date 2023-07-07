@@ -13,23 +13,35 @@ class TomofastxSensit:
     matrix: object
     weight: object
 
-#=========================================================================================
-def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc):
+#=======================================================================================================
+def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc, b = None):
     """
     Writes a scipy csr_matrix matrix to the Tomofast-x format.
+
+    sensit_path: output folder path
+    matrix: scipy CSR matrix with Nrows = ndata, Ncolumns = nx * ny * nz
+    weight: depth weight (1D numpy float array).
+    b: right-hand side vector (1D numpy float array) - optional.
     """
+    nel_total = nx * ny * nz
+    nnz_total = matrix.data.size
+
+    print('nel_total =', nel_total)
+    print('nnz_total =', nnz_total)
+
+    # Sanity check.
+    if (matrix.shape != (ndata, nel_total)):
+        raise Exception('Inconsistent matrix dimensions!')
+
+    if (weight.shape != (nel_total,)):
+        raise Exception('Inconsistent weight dimension!')
+
     # Some additional metadata needed in Tomofast-x.
     MATRIX_PRECISION = 4
     compression_type = 0
     comp_error = 0.
     nmodel_components = 1
     ndata_components = 1
-
-    nel_total = nx * ny * nz
-    nnz_total = matrix.data.size
-
-    print('nel_total =', nel_total)
-    print('nnz_total =', nnz_total)
 
     # Parallel matrix partitioning arrays.
     nnz_at_cpu_new = np.ndarray(shape=(nbproc), dtype=np.int32)
@@ -43,6 +55,8 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
     filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.dat"
     # Depth weight file.
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
+    # Right-hand side file.
+    filename_b = sensit_path + "/sensit_grav_" + str(nbproc) + "_b"
 
     # Create the output sensit folder.
     os.makedirs(os.path.dirname(filename_metadata), exist_ok=True)
@@ -74,6 +88,22 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
         f.write(weight.tobytes())
 
     print("Weight file is written to:", filename_weight)
+
+    #----------------------------------------------------------
+    # Writing the right-hand side.
+    #----------------------------------------------------------
+    if (b is not None):
+        with open(filename_b, "wb") as f:
+            # Write a header.
+            f.write(struct.pack('>i', b.size))
+
+            # Convert to big-endian.
+            b = b.astype('>f8')
+
+            # Write b to file.
+            f.write(b.tobytes())
+
+        print("Right-hand side file is written to:", filename_b)
 
     #----------------------------------------------------------
     # Writing the matrix.
@@ -540,7 +570,11 @@ def test_write_sensit_to_tomofastx():
     weight = np.ndarray(shape=(nel_total), dtype=np.float32)
     weight[:] = 1.
 
-    write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc)
+    # Right-hand-side.
+    b = np.ndarray(shape=(ndata + nel_total), dtype=np.float32)
+    b[:] = 3.
+
+    write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nbproc, b)
 
 #=========================================================================================
 if __name__ == "__main__":
