@@ -108,7 +108,9 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
     #----------------------------------------------------------
     # Writing the matrix.
     #----------------------------------------------------------
-    nel_current = 0
+    model_component = 1
+    data_component = 1
+
     ndata_all = 0
 
     # Loop over parallel matrix chunks.
@@ -136,15 +138,12 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
                 # Number of non-zero elements in this row.
                 nel = matrix.indptr[i + 1] - matrix.indptr[i]
 
-                model_component = 1
-                data_component = 1
-
                 # Write local header.
                 f.write(struct.pack('>iiii', idata, nel, model_component, data_component))
 
                 # Array start/end indexes corresponding to the current matrix row.
-                s = nel_current
-                e = nel_current + nel
+                s = matrix.indptr[i]
+                e = matrix.indptr[i + 1]
 
                 # Extract data for one matrix row.
                 col = matrix.indices[s:e]
@@ -160,8 +159,6 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
                 # Writing one matrix row.
                 f.write(col.tobytes())
                 f.write(dat.tobytes())
-
-                nel_current = nel_current + nel
 
         print("Sensitivity file is written to:", filename_sensit)
 
