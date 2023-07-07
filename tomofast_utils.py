@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import numpy as np
 from scipy.sparse import csr_matrix
+import struct
 import os
 
 @dataclass
@@ -45,12 +46,68 @@ def write_sensit_to_tomofastx(sensit_path, matrix, nx, ny, nz, ndata, nbproc):
 
     #----------------------------------------------------------
     # Reading the metadata.
+    #----------------------------------------------------------
     with open(filename_metadata, "w") as f:
         f.write("{} {} {} {} {} {}\n".format(nx, ny, nz, ndata, nbproc, MATRIX_PRECISION))
         f.write("{} {}\n".format(compression_type, comp_error))
         f.write("{} {}\n".format(nmodel_components, ndata_components))
         np.savetxt(f, (nnz_at_cpu_new,), fmt="%d")
         np.savetxt(f, (nelements_at_cpu_new,), fmt="%d")
+
+    #----------------------------------------------------------
+    # Reading the matrix.
+    #----------------------------------------------------------
+    nel_current = 0
+    ndata_all = 0
+
+    # Loop over parallel matrix chunks.
+    for myrank in range(nbproc):
+
+        # Sensitivity kernel file.
+        filename_sensit = sensit_path + "/sensit_grav_" + str(nbproc) + "_" + str(myrank)
+
+        # Building the matrix arrays.
+        with open(filename_sensit, "wb") as f:
+            # TODO: Adjust for the parallel case.
+            ndata_loc = ndata
+
+            # Write global header.
+            f.write(struct.pack('>iiiii', ndata_loc, ndata, nel_total, myrank, nbproc))
+
+            ndata_all += ndata_loc
+
+            # Loop over matrix rows.
+            for i in range(ndata_loc):
+                # Global data index. 
+                # TODO: Adjust for the parallel case.
+                idata = i + 1
+
+                # Number of non-zero elements in this row.
+                nel = matrix.indptr[i + 1] - matrix.indptr[i]
+
+                model_component = 1
+                data_component = 1
+
+                # Write local header.
+                f.write(struct.pack('>iiii', idata, nel, model_component, data_component))
+
+                # Array start/end indexes corresponding to the current matrix row.
+                s = nel_current
+                e = nel_current + nel
+
+                # Extract data for one matrix row.
+                col = matrix.indices[s:e]
+                dat = matrix.data[s:e]
+
+                # Convert to big-endian.
+                col = col.astype('>i4')
+                dat = dat.astype('>f4')
+
+                # Writing one matrix row.
+                f.write(col.tobytes())
+                f.write(dat.tobytes())
+
+                nel_current = nel_current + nel
 
 #=========================================================================================
 def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
@@ -447,8 +504,8 @@ def test_write_sensit_to_tomofastx():
     matrix_np = np.ndarray(shape=(ndata, nel_total), dtype=np.float32)
 
     matrix_np[:, :] = 5.
-    matrix_np[0, :] = 0.
     matrix_np[:, 0] = 0.
+    matrix_np[:, 5] = 0.
 
     print(matrix_np.shape)
 
