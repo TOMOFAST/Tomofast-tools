@@ -169,7 +169,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     """
 
     # Metadata file.
-    filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.dat"
+    filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.txt"
     # Depth weight file.
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
 
@@ -193,7 +193,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
             print('ndata_read =', ndata_read)
 
         # Reading the number of procs.
-        nbproc_read = int(lines[0].split()[4])
+        nbproc_read = int(lines[1].split()[0])
 
         if (nbproc != nbproc_read):
             raise Exception('Inconsistent nbproc!')
@@ -201,7 +201,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
         if verbose:
             print('nbproc_read =', nbproc_read)
 
-        compression_type = int(lines[1].split()[0])
+        compression_type = int(lines[2].split()[0])
 
         if verbose:
             print('compression_type =', compression_type)
@@ -210,8 +210,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
             raise Exception('Inconsistent compression type!')
 
         # The number of non-zero values.
-        # NOTE: It should be lines[1] for Tomofast-x v.1.6
-        nnz_total = sum(map(int, lines[3].split()))
+        nnz_total = int(lines[4].split()[0])
 
         if verbose:
             print("nnz_total =", nnz_total)
@@ -221,7 +220,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     nel_total = nx * ny * nz
     with open(filename_weight, "r") as f:
         # Note using '>' for big-endian.
-        header = np.fromfile(f, dtype='>i4', count=5)
+        header = np.fromfile(f, dtype='>i4', count=1)
         weight = np.fromfile(f, dtype='>f8', count=nel_total)
 
     #----------------------------------------------------------
