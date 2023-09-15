@@ -169,7 +169,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     """
 
     # Metadata file.
-    filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.txt"
+    filename_metadata = sensit_path + "/sensit_grav_meta.txt"
     # Depth weight file.
     filename_weight = sensit_path + "/sensit_grav_" + str(nbproc) + "_weight"
 
