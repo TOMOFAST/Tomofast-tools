@@ -132,7 +132,7 @@ def read_header_dimensions(filename):
 def main():
 
     # Noddy model file name.
-    model_file = "noddy_ellipse_fault/noddy_ellipse_mag_sus.dic"
+    model_file = "../Noddy_models/noddy_ellipse_fault/noddy_ellipse_mag_sus.dic"
 
     # Header filename.
     header_file = model_file[0:len(model_file) - 3] + "hdr"
@@ -140,14 +140,22 @@ def main():
 
     print("Model dimensions:", nx, ny, nz)
 
-    Xmin = 0.
-    Xmax = 4000.
-    Ymin = 0.
-    Ymax = 4000.
-    Zmin = 0.
-    Zmax = 2000.
+    # Model grid cell size.
+    cell_size = 100.
 
+    # Data grid elevation.
     elevation = 0.1
+
+    Xmin = 0.
+    Ymin = 0.
+    Zmin = 0.
+    Xmax = cell_size * nx
+    Ymax = cell_size * ny
+    Zmax = cell_size * nz
+
+    print("Xmin, Xmax =", Xmin, Xmax)
+    print("Ymin, Ymax =", Ymin, Ymax)
+    print("Zmin, Zmax =", Zmin, Zmax)
 
     #------------------------------------------------------------
     # Write the data grid.
