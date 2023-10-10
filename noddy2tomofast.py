@@ -131,11 +131,16 @@ def read_header_dimensions(filename):
 #=============================================================================
 def main():
 
-    # Noddy model file name.
-    model_file = "../Noddy_models/noddy_ellipse_fault/noddy_ellipse_mag_sus.dic"
+    # Use for density model.
+    CONVERT_DENSITY_UNITS = True
 
-    # Header filename.
+    # Noddy model file name.
+    model_file = "../Noddy_models/noddy_ellipse_fault/noddy_ellipse_fault_den.dic"
+
+    # Noddy header file name.
     header_file = model_file[0:len(model_file) - 3] + "hdr"
+
+    # Read model dimensions.
     nx, ny, nz = read_header_dimensions(header_file)
 
     print("Model dimensions:", nx, ny, nz)
@@ -169,9 +174,9 @@ def main():
     #------------------------------------------------------------
     model_values = read_noddy_model(model_file, nx, ny, nz)
 
-    # Convert to density anomalies in kg/m3.
-    #model_values = (model_values - 2.67) * 1.e3
-    #model_values = model_values * 1.e3
+    if CONVERT_DENSITY_UNITS:
+        # Convert to density anomalies in kg/m3.
+        model_values = model_values * 1.e3
 
     #---------------------------------------------------------------
 
