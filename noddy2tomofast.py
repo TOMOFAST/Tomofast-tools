@@ -52,18 +52,21 @@ def write_model_grid(filename, nx, ny, nz, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, m
     np.savetxt(filename, grid, delimiter=' ', fmt="%f %f %f %f %f %f %f %d %d %d", header=str(nelements), comments='')
 
 #=====================================================================================================
-def write_data_grid(filename, nx, ny, Xmin, Xmax, Ymin, Ymax, elevation):
+def write_data_grid(filename, cell_size, Xmin, Xmax, Ymin, Ymax, elevation):
     '''
     Write data grid in the Tomofast-x format.
     '''
+    nx = int((Xmax - Xmin) / cell_size)
+    ny = int((Ymax - Ymin) / cell_size)
+
     Ndata = nx * ny
     data_tomo = np.zeros((nx * ny, 4))
 
     print("Writing the data grid with nx, ny =", nx, ny)
     print("Ndata =", Ndata)
 
-    dx = (Xmax - Xmin) / nx
-    dy = (Ymax - Ymin) / ny
+    dx = cell_size
+    dy = cell_size
 
     p = 0
     for j in range(ny):
@@ -135,7 +138,7 @@ def main():
     CONVERT_DENSITY_UNITS = True
 
     # Noddy model file name.
-    model_file = "../Noddy_models/noddy_ellipse_fault/noddy_ellipse_fault_den.dic"
+    model_file = "../Noddy_models/noddy_ellipse_fault/noddy_ellipse_den.dic"
 
     # Noddy header file name.
     header_file = model_file[0:len(model_file) - 3] + "hdr"
@@ -150,6 +153,9 @@ def main():
 
     # Data grid elevation.
     elevation = 0.1
+
+    # Data padding to control the data coverage.
+    data_padding = 0.
 
     Xmin = 0.
     Ymin = 0.
@@ -167,7 +173,8 @@ def main():
     #------------------------------------------------------------
     filename = "data_grid.txt"
 
-    write_data_grid(filename, nx, ny, Xmin, Xmax, Ymin, Ymax, elevation)
+    write_data_grid(filename, cell_size, Xmin - data_padding, Xmax + data_padding,
+                                         Ymin - data_padding, Ymax + data_padding, elevation)
 
     #------------------------------------------------------------
     # Read the Noddy model.
