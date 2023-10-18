@@ -2,7 +2,7 @@ import os
 import numpy as np
 # WAXI Course on inversion with Tomofast-x / Course WAXI sur l'inversion avec Tomofast-x.
 # Script to create a mesh for inversion using Tomofast-x.
-# Script pour créeun une grille pour l'inversion avec Tomofaast-x.
+# Script pour créer une grille pour l'inversion avec Tomofaast-x.
 
 def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     """
