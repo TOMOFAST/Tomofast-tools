@@ -44,7 +44,7 @@ y_vect = np.linspace(y_min, y_max, ny)
 z_vect = np.linspace(z_min, z_max, nz)
 
 dx = (x_max-x_min)/(nx-1)
-dy = (y_max-x_min)/(ny-1)
+dy = (y_max-y_min)/(ny-1)
 dz = (z_max-z_min)/(nz-1)
 
 i_indices = np.arange(1, nx+1)
