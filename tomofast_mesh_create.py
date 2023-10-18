@@ -1,6 +1,8 @@
 import os
 import numpy as np
-
+# WAXI Course on inversion with Tomofast-x / Course WAXI sur l'inversion avec Tomofast-x.
+# Script to create a mesh for inversion using Tomofast-x.
+# Script pour créeun une grille pour l'inversion avec Tomofaast-x.
 
 def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     """
@@ -21,7 +23,8 @@ def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     file.close()
 
 
-# The UTM coordinates for your mesh.
+# The UTM coordinates for your mesh to define the area (values in meters).
+# Coordonnées UTM de la grille pour l'inversion (valeurs en metres).
 x_min = 1000.
 y_min = 2000.
 z_min = 0.
@@ -29,12 +32,15 @@ x_max = 1100.
 y_max = 2100.
 z_max = 100.
 
-# The number of cells in each direction.
+# The number of cells in each direction (dimension of your mesh).
+# Nombre de cellules dans chaque direction (dimension de la grille).
 nx = 9
 ny = 10
 nz = 11
 
-# Making the mesh.
+# Making the mesh (nothing to change beyond this point).
+# Creation de la grille (rien à changer à partir de ce point).
+# ===============================================================
 nx += 1
 ny += 1
 nz += 1
