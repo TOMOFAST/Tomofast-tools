@@ -1,9 +1,9 @@
 import os
 import numpy as np
 # 18/10/2023. 
-# WAXI Course on inversion with Tomofast-x / Course WAXI sur l'inversion avec Tomofast-x.
+# WAXI4/Agate Project Course on inversion with Tomofast-x / Cours WAXI4 / Projet Agate sur l'inversion avec Tomofast-x.
 # Script to create a mesh for inversion using Tomofast-x.
-# Script pour créer une grille pour l'inversion avec Tomofaast-x.
+# Script pour créer une grille pour l'inversion avec Tomofast-x.
 
 # The UTM coordinates for your mesh to define the area (values in meters).
 # Coordonnées UTM de la grille pour l'inversion (valeurs en metres).
@@ -12,7 +12,7 @@ y_min = 2000.
 z_min = 0.
 x_max = 1100.
 y_max = 2100.
-z_max = 100.
+z_max = 100.  # Note that z is positive downwards / Notez que z est positif vers le bas.
 
 # The number of cells in each direction (dimension of your mesh).
 # Nombre de cellules dans chaque direction (dimension de la grille).
@@ -21,13 +21,14 @@ ny = 10
 nz = 11
 
 # ===============================================================
-# Making the mesh (nothing to change beyond this point).
-# Creation de la grille (rien à changer à partir de ce point).
+# Making and writing the mesh (nothing to change beyond this point).
+# Creation et ecriture de la grille (rien à changer à partir d'ici).
 # ===============================================================
 
 def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     """
-    Write Tomofast-x model grid.
+    A funxtion to write the model and grid for Tomofast-x.
+    Une fonction pour ecrire le model et la grille pour Tomofast-x.
     """
 
     filename = output_folder + "/model_grid.txt"
@@ -43,7 +44,8 @@ def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
         np.savetxt(file, line_data, fmt="%f %f %f %f %f %f %f %d %d %d")
     file.close()
 
-
+# Creating the mesh. 
+# Creer la grille.
 nx += 1
 ny += 1
 nz += 1
@@ -62,8 +64,6 @@ k_indices = np.arange(1, nz+1)
 
 Y, Z, X = np.meshgrid(y_vect[:-1], z_vect[:-1], x_vect[:-1])
 J_indices, K_indices, I_indices = np.meshgrid(j_indices[:-1], k_indices[:-1], i_indices[:-1])
-
-np.shape(Y)
 
 X = X.flatten()
 Y = Y.flatten()
@@ -87,6 +87,5 @@ Z2 = Z2 - np.min(Z2) + z_min + dz
 line_data = np.array([X1, X2, Y1, Y2, Z1, Z2, values,
                       I_indices.flatten(), J_indices.flatten(), K_indices.flatten()]).T
 
-# Writing the file.
+# Writing the file / Ecrire le fichier. 
 write_tomofast_model_grid(line_data)
-
