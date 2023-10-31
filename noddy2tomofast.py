@@ -109,7 +109,8 @@ def read_noddy_model(filename, nx, ny, nz):
         # Sanity check.
         assert(model_slice.shape[0] == ny and model_slice.shape[1] == nx)
         # Store the model slice.
-        model[k, :, :] = model_slice.copy()
+        # Revert the Z-axis too.
+        model[nz - k - 1, :, :] = model_slice.copy()
 
     return model
 
