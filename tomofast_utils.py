@@ -163,15 +163,22 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
         print("Sensitivity file is written to:", filename_sensit)
 
 #=========================================================================================
-def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
+def load_sensit_from_tomofastx(sensit_path, nbproc, type='grav', verbose=False):
     """
     Loads the sensitivity kernel from Tomofast-x and stores it in the CSR sparse matrix.
     """
 
+    if type == 'grav':
+        prefix_sensit_name = "sensit_grav_"
+    elif type == 'magn':
+        prefix_sensit_name = "sensit_magn_"
+    else:
+        raise Exception('Wrong type of sensitivity matrix!')
+
     # Metadata file.
-    filename_metadata = sensit_path + "/sensit_grav_meta.txt"
+    filename_metadata = sensit_path + "/" + prefix_sensit_name + "meta.txt"
     # Depth weight file.
-    filename_weight = sensit_path + "/sensit_grav_weight"
+    filename_weight = sensit_path + "/" + prefix_sensit_name + "weight"
 
     #----------------------------------------------------------
     # Reading the metadata.
@@ -237,7 +244,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, verbose=False):
     for n in range(nbproc):
 
         # Sensitivity kernel file.
-        filename_sensit = sensit_path + "/sensit_grav_" + str(nbproc) + "_" + str(n)
+        filename_sensit = sensit_path + "/" + prefix_sensit_name + str(nbproc) + "_" + str(n)
 
         # Building the matrix arrays.
         with open(filename_sensit, "r") as f:
