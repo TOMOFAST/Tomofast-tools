@@ -175,7 +175,6 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
         prefix_sensit_name = "sensit_magn_"
     else:
         print(type)
-
         raise Exception('Wrong type of sensitivity matrix!')
 
     # Metadata file.
