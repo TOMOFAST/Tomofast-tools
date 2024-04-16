@@ -1,5 +1,5 @@
 '''
-Drawing Tomofast-x model profiles and data.
+A script for visualisation of Tomofast-x final model (using Python tools).
 
 Author: Vitaliy Ogarko
 '''
@@ -112,27 +112,21 @@ def main():
     # Setting the file paths and constants.
     #----------------------------------------------------------------------------------
 
-    # Model grid dimensions (modelGrid.size parameter in the Parfile).
-    nx = 2
-    ny = 128
-    nz = 32
-
     # Path to input model grid (modelGrid.grav.file parameter in the Parfile).
-    filename_model_grid = './Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
+    filename_model_grid = '../Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
 
     # Path to the output model after inversion.
-    filename_model_final = './Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
+    filename_model_final = '../Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
 
     # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
-    filename_data_observed = './Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
+    filename_data_observed = '../Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
 
     # Path to calculated data after inversion.
-    filename_data_calculated = './Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
+    filename_data_calculated = '../Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
 
     #----------------------------------------------------------------------------------
     # Reading data.
     #----------------------------------------------------------------------------------
-    nelements = nx * ny * nz
 
     # Reading the model grid.
     model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5,6), skiprows=1)
@@ -142,18 +136,14 @@ def main():
     model_grid[:, 4] = - model_grid[:, 4]
     model_grid[:, 5] = - model_grid[:, 5]
 
-    assert nelements == model_grid.shape[0], "Wrong model grid dimensions!"
-
     # Reading the final model.
     model_final = np.loadtxt(filename_model_final, dtype=float, skiprows=1)
-
-    assert nelements == model_final.shape[0], "Wrong final model dimensions!"
 
     # Reading data.
     data_observed = np.loadtxt(filename_data_observed, dtype=float, usecols=(0,1,2,3), skiprows=1)
     data_calculated = np.loadtxt(filename_data_calculated, dtype=float, usecols=(0,1,2,3), skiprows=1)
 
-    print("ndata =", data_observed.shape[0])
+    print("Ndata =", data_observed.shape[0])
 
     #----------------------------------------------------------------------------------
     # Extract the model slices.
@@ -201,7 +191,7 @@ def main():
     data_observed_slice = data_observed[data_filter, :]
     data_calculated_slice = data_calculated[data_filter, :]
 
-    print("ndata slice =", data_observed_slice.shape[0])
+    print("Ndata slice =", data_observed_slice.shape[0])
 
     #----------------------------------------------------------------------------------
     # Drawing the data.
