@@ -38,18 +38,11 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
 
     # Some additional metadata needed in Tomofast-x.
     MATRIX_PRECISION = 4
+    depth_weighting_type = 1
     compression_type = 0
     comp_error = 0.
     nmodel_components = 1
     ndata_components = 1
-
-    # Parallel matrix partitioning arrays.
-    nnz_at_cpu_new = np.ndarray(shape=(nbproc), dtype=np.int32)
-    nelements_at_cpu_new = np.ndarray(shape=(nbproc), dtype=np.int32)
-
-    # TODO: Adjust for nbproc > 1.
-    nnz_at_cpu_new[0] = nnz_total
-    nelements_at_cpu_new[0] = nel_total
 
     # Metadata file.
     filename_metadata = sensit_path + "/sensit_grav_" + str(nbproc) + "_meta.dat"
@@ -65,11 +58,11 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
     # Writing the metadata.
     #----------------------------------------------------------
     with open(filename_metadata, "w") as f:
-        f.write("{} {} {} {} {} {}\n".format(nx, ny, nz, ndata, nbproc, MATRIX_PRECISION))
+        f.write("{} {} {} {}\n".format(nx, ny, nz, ndata))
+        f.write("{} {} {}\n".format(nbproc, MATRIX_PRECISION, depth_weighting_type))
         f.write("{} {}\n".format(compression_type, comp_error))
         f.write("{} {}\n".format(nmodel_components, ndata_components))
-        np.savetxt(f, (nnz_at_cpu_new,), fmt="%d")
-        np.savetxt(f, (nelements_at_cpu_new,), fmt="%d")
+        f.write("{}\n".format(nnz_total))
 
     print("Metadata file is written to:", filename_metadata)
 
