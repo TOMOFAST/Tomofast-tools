@@ -292,7 +292,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
     csr_dat = csr_dat * 1.e+3
 
     # Create a sparse matrix object.
-    matrix = csr_matrix((csr_dat, (csr_row, csr_col)), shape=(ndata_all, nmodel))
+    matrix = csr_matrix((csr_dat, (csr_row, csr_col)), shape=(ndata_all * ndata_components, nmodel))
 
     sensit = TomofastxSensit(nx, ny, nz, compression_type, matrix, weight)
 
