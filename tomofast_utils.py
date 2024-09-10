@@ -185,14 +185,8 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
         ny = int(lines[0].split()[1])
         nz = int(lines[0].split()[2])
 
-        if verbose:
-            print('Tomofastx nx, ny, nz =', nx, ny, nz)
-
         # Reading the number of data.
         ndata_read = int(lines[0].split()[3])
-
-        if verbose:
-            print('ndata_read =', ndata_read)
 
         # Reading the number of procs.
         nbproc_read = int(lines[1].split()[0])
@@ -200,21 +194,23 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
         if (nbproc != nbproc_read):
             raise Exception('Inconsistent nbproc!')
 
-        if verbose:
-            print('nbproc_read =', nbproc_read)
-
         compression_type = int(lines[2].split()[0])
-
-        if verbose:
-            print('compression_type =', compression_type)
 
         if compression_type > 1:
             raise Exception('Inconsistent compression type!')
+
+        # The number of data components.
+        ndata_components = int(lines[3].split()[1])
 
         # The number of non-zero values.
         nnz_total = int(lines[4].split()[0])
 
         if verbose:
+            print('Tomofastx nx, ny, nz =', nx, ny, nz)
+            print('ndata_read =', ndata_read)
+            print('nbproc_read =', nbproc_read)
+            print('compression_type =', compression_type)
+            print('ndata_components =', ndata_components)
             print("nnz_total =", nnz_total)
 
     #----------------------------------------------------------
@@ -258,37 +254,39 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
 
             # Loop over matrix rows.
             for i in range(ndata_loc):
-                # Local line header.
-                header_loc = np.fromfile(f, dtype='>i4', count=4)
+                for d in range(ndata_components):
+                    # Local line header.
+                    header_loc = np.fromfile(f, dtype='>i4', count=4)
 
-                # Global data index.
-                idata = header_loc[0]
+                    # Global data index.
+                    idata = header_loc[0]
 
-                # Number of non-zero elements in this row.
-                nel = header_loc[1]
+                    # Number of non-zero elements in this row.
+                    nel = header_loc[1]
 
-                # Reading one matrix row.
-                col = np.fromfile(f, dtype='>i4', count=nel)
-                dat = np.fromfile(f, dtype='>f4', count=nel)
+                    # The read data component index.
+                    d_read = header_loc[3]
 
-                # Array start/end indexes corresponding to the current matrix row.
-                s = nel_current
-                e = nel_current + nel
+                    if (d + 1 != d_read):
+                        raise Exception('Inconsistent data component index!')
 
-                csr_col[s:e] = col
-                csr_row[s:e] = idata - 1
-                csr_dat[s:e] = dat
+                    # Reading one matrix row.
+                    col = np.fromfile(f, dtype='>i4', count=nel)
+                    dat = np.fromfile(f, dtype='>f4', count=nel)
 
-                nel_current = nel_current + nel
+                    # Array start/end indexes corresponding to the current matrix row.
+                    s = nel_current
+                    e = nel_current + nel
+
+                    csr_col[s:e] = col - 1
+                    csr_row[s:e] = (idata - 1) * ndata_components + d
+                    csr_dat[s:e] = dat
+
+                    nel_current = nel_current + nel
     #----------------------------------------------------------
-    if verbose:
-        print('ndata_all =', ndata_all)
 
     if (ndata_all != ndata_read):
         raise Exception('Wrong ndata value!')
-
-    # Shift column indexes to convert from Fortran to Python array index.
-    csr_col = csr_col - 1
 
     # Convert units from Tomofast to geomos (as we use different gravitational constant).
     csr_dat = csr_dat * 1.e+3
