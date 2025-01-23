@@ -155,9 +155,8 @@ def write_sensit_to_tomofastx(sensit_path, matrix, weight, nx, ny, nz, ndata, nb
 
         print("Sensitivity file is written to:", filename_sensit)
 
-#=========================================================================================
-
-def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
+#====================================================================================================
+def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False, unit_multiplier=1.0):
     """
     Loads the sensitivity kernel from Tomofast-x and stores it in the CSR sparse matrix.
     """
@@ -288,8 +287,8 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False):
     if (ndata_all != ndata_read):
         raise Exception('Wrong ndata value!')
 
-    # Convert units from Tomofast to geomos (as we use different gravitational constant).
-    csr_dat = csr_dat * 1.e+3
+    # Convert units.
+    csr_dat = csr_dat * unit_multiplier
 
     # Create a sparse matrix object.
     matrix = csr_matrix((csr_dat, (csr_row, csr_col)), shape=(ndata_all * ndata_components, nmodel))
