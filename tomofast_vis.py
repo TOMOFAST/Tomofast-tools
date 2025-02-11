@@ -119,10 +119,10 @@ def main():
     filename_model_final = '../Tomofast-x/output/mansf_slice/model/grav_final_model_full.txt'
 
     # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
-    filename_data_observed = '../Tomofast-x/output/mansf_slice/grav_calc_read_data.txt'
+    filename_data_observed = '../Tomofast-x/output/mansf_slice/data/grav_calc_read_data.txt'
 
     # Path to calculated data after inversion.
-    filename_data_calculated = '../Tomofast-x/output/mansf_slice/grav_calc_final_data.txt'
+    filename_data_calculated = '../Tomofast-x/output/mansf_slice/data/grav_calc_final_data.txt'
 
     #----------------------------------------------------------------------------------
     # Reading data.
