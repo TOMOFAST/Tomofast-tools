@@ -14,7 +14,7 @@ def main():
     filename_model_grid = '../Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
 
     # Path to the output model after inversion.
-    filename_model_final = '../Tomofast-x/output/mansf_slice/Voxet/grav_final_voxet_full.txt'
+    filename_model_final = '../Tomofast-x/output/mansf_slice/model/grav_final_voxet_full.txt'
 
     # Reading the model grid.
     model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5), skiprows=1)
