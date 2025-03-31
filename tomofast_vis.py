@@ -106,7 +106,7 @@ def draw_data(data_obs, data_calc, profile_coord):
 
 #=====================================================================================================
 def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
-        slice_index=0, slice_dim=0):
+        slice_index=1, slice_dim=0):
     print('Started tomofast_vis.')
 
     #----------------------------------------------------------------------------------
