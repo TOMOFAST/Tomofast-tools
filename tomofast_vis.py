@@ -105,7 +105,8 @@ def draw_data(data_obs, data_calc, profile_coord):
     pl.close(pl.gcf())
 
 #=====================================================================================================
-def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated):
+def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
+        slice_index=0, slice_dim=0):
     print('Started tomofast_vis.')
 
     #----------------------------------------------------------------------------------
@@ -149,9 +150,8 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     # Extract the model slices.
     #----------------------------------------------------------------------------------
 
-    # Extract the YZ profile.
-    nx_slice = 1
-    slice_filter = (model_indexes[:, 0] == nx_slice)
+    # Extract the 2D profile.
+    slice_filter = (model_indexes[:, slice_dim] == slice_index)
 
     model_grid_slice = model_grid[slice_filter]
 
