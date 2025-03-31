@@ -167,8 +167,13 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     print("Grid slice dimenion (X): ", grid_slice_x_min, grid_slice_x_max)
     print("Grid slice dimenion (Y): ", grid_slice_y_min, grid_slice_y_max)
 
-    # Remove grid X-data.
-    model_grid_slice_2d = model_grid_slice[:, 2:6]
+    # Remove not-needed columns.
+    if (slice_dim == 0):
+        model_grid_slice_2d = np.delete(model_grid_slice, [0, 1, 6], axis=1)
+    elif (slice_dim == 1):
+        model_grid_slice_2d = np.delete(model_grid_slice, [2, 3, 6], axis=1)
+    elif (slice_dim == 2):
+        model_grid_slice_2d = np.delete(model_grid_slice, [4, 5, 6], axis=1)
 
     model_final_slice = model_final[slice_filter]
 
