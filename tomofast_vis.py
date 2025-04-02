@@ -106,7 +106,7 @@ def draw_data(data_obs, data_calc, profile_coord):
 
 #=====================================================================================================
 def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
-        slice_index=1, slice_dim=0, palette='viridis'):
+        slice_index=1, slice_dim=0, palette='viridis', draw_true_model=True):
     print('Started tomofast_vis.')
 
     #----------------------------------------------------------------------------------
@@ -182,7 +182,8 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     #----------------------------------------------------------------------------------
     grid = model_grid_slice_2d
 
-    draw_model(grid, true_model_slice, "True model.", palette)
+    if (draw_true_model):
+        draw_model(grid, true_model_slice, "True model.", palette)
     draw_model(grid, model_final_slice, "Final model.", palette)
 
     #----------------------------------------------------------------------------------
