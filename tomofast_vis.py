@@ -13,7 +13,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.colors import ListedColormap
 import matplotlib.colorbar as cbar
 
-def draw_model(grid, model, title):
+def draw_model(grid, model, title, palette):
     '''
     Draw the model slice.
     Note: the input grid should be a 2D grid corresponding to the model slice.
@@ -40,7 +40,7 @@ def draw_model(grid, model, title):
     currentAxis.set_title(title)
 
     # Gradient palette.
-    cmap = pl.get_cmap('viridis')
+    cmap = pl.get_cmap(palette)
 
     patches = []
     color_list = []
@@ -106,7 +106,7 @@ def draw_data(data_obs, data_calc, profile_coord):
 
 #=====================================================================================================
 def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
-        slice_index=1, slice_dim=0):
+        slice_index=1, slice_dim=0, palette='viridis'):
     print('Started tomofast_vis.')
 
     #----------------------------------------------------------------------------------
@@ -182,8 +182,8 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     #----------------------------------------------------------------------------------
     grid = model_grid_slice_2d
 
-    draw_model(grid, true_model_slice, "True model.")
-    draw_model(grid, model_final_slice, "Final model.")
+    draw_model(grid, true_model_slice, "True model.", palette)
+    draw_model(grid, model_final_slice, "Final model.", palette)
 
     #----------------------------------------------------------------------------------
     # Extract data slice.
