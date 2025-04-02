@@ -96,7 +96,7 @@ def draw_data(data_obs, data_calc, profile_coord):
     # Increasing the figure size.
     #pl.figure(figsize=(12.8, 9.6))
 
-    pl.plot(data_obs[:, profile_coord], data_obs[:, 3], '--bo', label='Observed data')
+    pl.plot(data_obs[:, profile_coord], data_obs[:, 3], '--bs', label='Observed data')
     pl.plot(data_calc[:, profile_coord], data_calc[:, 3], '--ro', label='Calculated data')
 
     pl.legend(loc="upper left")
