@@ -201,8 +201,16 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     #----------------------------------------------------------------------------------
     # Drawing the data.
     #----------------------------------------------------------------------------------
-    # YZ profile.
-    profile_coord = 1
+    # Choose coordinate to be used for 1D data plot (data responce from 2D profile).
+    if (slice_dim == 0):
+        # YZ profile.
+        profile_coord = 1
+    elif (slice_dim == 1):
+        # XZ profile.
+        profile_coord = 0
+    else:
+        # A 2D data responce - not supported here.
+        profile_coord = 0
 
     draw_data(data_observed_slice, data_calculated_slice, profile_coord)
 
