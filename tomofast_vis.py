@@ -7,12 +7,16 @@ Author: Vitaliy Ogarko
 import numpy as np
 import matplotlib.pyplot as pl
 import matplotlib as mpl
+import matplotlib.colors as colors
+from matplotlib import cm
 
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import ListedColormap
 import matplotlib.colorbar as cbar
 
+#==================================================================================================
+# Visualisation of a 2D model slice.
 def draw_model(grid, model, title, palette):
     '''
     Draw the model slice.
@@ -87,6 +91,8 @@ def draw_model(grid, model, title, palette):
 
     pl.close(pl.gcf())
 
+#==================================================================================================
+# Visualisation of forward 1D data profile (along the model slice).
 def draw_data(data_obs, data_calc, profile_coord):
     '''
     Draw the data.
@@ -103,6 +109,77 @@ def draw_data(data_obs, data_calc, profile_coord):
 
     pl.show()
     pl.close(pl.gcf())
+
+#==================================================================================================
+# Visualisation of a 3D model.
+def plot_3D_model(model, threshold, dzyx, filename="density", top_view=False):
+    model = model.T
+    L, W, H = model.shape
+
+    color = np.empty(model.shape, dtype=object)
+    filled = (abs(model) >= threshold)
+    #filled = (model >= threshold)
+
+    print(filled.shape)
+    counter = np.count_nonzero(filled == True)
+    print(counter)
+
+    # Define color map.
+    norm = colors.Normalize(vmin=-1.0, vmax=1.0, clip=True)
+    mapper = cm.ScalarMappable(norm=norm, cmap=cm.jet)
+
+    for i in range(L):
+        for j in range(W):
+            for k in range(H):
+                if filled[i][j][k]:
+                    color[i, j, k] = colors.rgb2hex(mapper.to_rgba(model[i][j][k]))
+ 
+    plt_model_3D(filled, color, dzyx, filename, top_view)
+
+#==================================================================================================
+# Visualisation of a 3D model (called by plot_3D_model).
+def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False):
+    print("Starting plt_model()")
+    fig = pl.figure(figsize = (12, 12))
+
+    ax = fig.add_subplot(projection='3d')
+
+    # Change the view angle. Default: 30, -60.
+    ax.view_init(45, -45)
+    #ax.view_init(0, 0) # side view
+
+    if (top_view):
+        # Set the top view.
+        ax.set_proj_type('ortho')
+        ax.view_init(90, -90)
+
+    # Custom coordinates for the grid.
+    x, y, z = np.indices(np.array(filled.shape) + 1)
+    x = x * dzyx[2]
+    y = y * dzyx[1]
+    z = z * dzyx[0]
+
+    ax.voxels(x, y, z, filled, facecolors=facecolors, shade=False, edgecolors='black')
+
+    pl.axis('scaled')
+    ax.invert_zaxis()
+
+    ax.set_xlabel('X', labelpad=2)
+    ax.set_ylabel('Y', labelpad=2)
+    ax.set_zlabel('Z', labelpad=2)
+
+    #cb = pl.colorbar(cm.ScalarMappable(norm=pl.Normalize(-1, 1), cmap=cm.jet),
+    #                  shrink=0.5, aspect=20, pad = 0.09, label=r"Density $(g cm^{-3})$", ax=ax)
+
+    pl.show()
+
+#==================================================================================================
+# Visualisation of forward 2D data.
+def plot_field(field):
+    pl.figure(figsize=(6, 6), dpi = 150)
+    pl.imshow(field, cmap="jet", origin='lower')
+    pl.colorbar()
+    pl.show()
 
 #=====================================================================================================
 def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
