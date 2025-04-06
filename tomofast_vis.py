@@ -112,7 +112,7 @@ def draw_data(data_obs, data_calc, profile_coord):
 
 #==================================================================================================
 # Visualisation of a 3D model.
-def plot_3D_model(model, threshold, dzyx, filename="density", top_view=False):
+def plot_3D_model(model, threshold, dzyx, filename="density", top_view=False, title=''):
     model = model.T  # transpose to match plotting orientation
     L, W, H = model.shape
 
@@ -150,12 +150,11 @@ def plot_3D_model(model, threshold, dzyx, filename="density", top_view=False):
         edgecolors[i, j, k] = '#00000000'        # fully transparent edge
 
     # Call the plotter
-    plt_model_3D(filled, facecolors, dzyx, filename, top_view, edgecolors=edgecolors)
+    plt_model_3D(filled, facecolors, dzyx, filename, top_view, edgecolors=edgecolors, title=title)
 
 #==================================================================================================
 # Visualisation of a 3D model (called by plot_3D_model).
-def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False, edgecolors=None):
-    print("Starting plt_model()")
+def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False, edgecolors=None, title=''):
     fig = pl.figure(figsize=(12, 12))
     ax = fig.add_subplot(projection='3d')
 
@@ -180,15 +179,17 @@ def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False, e
     ax.set_xlabel('X', labelpad=2)
     ax.set_ylabel('Y', labelpad=2)
     ax.set_zlabel('Z', labelpad=2)
-
+    
+    pl.title(title)
     pl.show()
 
 #==================================================================================================
 # Visualisation of forward 2D data.
-def plot_field(field):
+def plot_field(field, title):
     pl.figure(figsize=(6, 6), dpi = 150)
     pl.imshow(field, cmap="jet", origin='lower')
     pl.colorbar()
+    pl.title(title)
     pl.show()
 
 #=====================================================================================================
@@ -305,4 +306,3 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
 #=============================================================================
 if __name__ == "__main__":
     main()
-
