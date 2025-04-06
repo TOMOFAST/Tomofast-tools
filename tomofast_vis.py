@@ -113,63 +113,73 @@ def draw_data(data_obs, data_calc, profile_coord):
 #==================================================================================================
 # Visualisation of a 3D model.
 def plot_3D_model(model, threshold, dzyx, filename="density", top_view=False):
-    model = model.T
+    model = model.T  # transpose to match plotting orientation
     L, W, H = model.shape
 
-    color = np.empty(model.shape, dtype=object)
+    # Threshold mask
     filled = (abs(model) >= threshold)
-    #filled = (model >= threshold)
 
-    print(filled.shape)
-    counter = np.count_nonzero(filled == True)
-    print(counter)
+    # Color and edgecolor arrays
+    facecolors = np.empty(model.shape, dtype=object)
+    edgecolors = np.empty(model.shape, dtype=object)
 
-    # Define color map.
+    # Color map setup
     norm = colors.Normalize(vmin=-1.0, vmax=1.0, clip=True)
     mapper = cm.ScalarMappable(norm=norm, cmap=cm.jet)
 
-    for i in range(L):
-        for j in range(W):
-            for k in range(H):
-                if filled[i][j][k]:
-                    color[i, j, k] = colors.rgb2hex(mapper.to_rgba(model[i][j][k]))
- 
-    plt_model_3D(filled, color, dzyx, filename, top_view)
+    # Assign colors to voxels above threshold
+    for i, j, k in zip(*np.where(filled)):
+        rgba = mapper.to_rgba(model[i, j, k])
+        facecolors[i, j, k] = colors.rgb2hex(rgba)
+        edgecolors[i, j, k] = '#000000'  # black edge (or rgba if desired)
+
+    # Add dummy invisible voxels at 8 corners to enforce full bounding box
+    corners = [
+        (0, 0, 0),
+        (L-1, 0, 0),
+        (0, W-1, 0),
+        (0, 0, H-1),
+        (L-1, W-1, 0),
+        (L-1, 0, H-1),
+        (0, W-1, H-1),
+        (L-1, W-1, H-1),
+    ]
+    for i, j, k in corners:
+        filled[i, j, k] = True
+        facecolors[i, j, k] = '#00000000'        # fully transparent face
+        edgecolors[i, j, k] = '#00000000'        # fully transparent edge
+
+    # Call the plotter
+    plt_model_3D(filled, facecolors, dzyx, filename, top_view, edgecolors=edgecolors)
 
 #==================================================================================================
 # Visualisation of a 3D model (called by plot_3D_model).
-def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False):
+def plt_model_3D(filled, facecolors, dzyx, filename="density", top_view=False, edgecolors=None):
     print("Starting plt_model()")
-    fig = pl.figure(figsize = (12, 12))
-
+    fig = pl.figure(figsize=(12, 12))
     ax = fig.add_subplot(projection='3d')
 
-    # Change the view angle. Default: 30, -60.
+    # View settings
     ax.view_init(45, -45)
-    #ax.view_init(0, 0) # side view
-
-    if (top_view):
-        # Set the top view.
+    if top_view:
         ax.set_proj_type('ortho')
         ax.view_init(90, -90)
 
-    # Custom coordinates for the grid.
+    # Voxel grid coordinates
     x, y, z = np.indices(np.array(filled.shape) + 1)
     x = x * dzyx[2]
     y = y * dzyx[1]
     z = z * dzyx[0]
 
-    ax.voxels(x, y, z, filled, facecolors=facecolors, shade=False, edgecolors='black')
+    # Plot voxels
+    ax.voxels(x, y, z, filled, facecolors=facecolors, edgecolors=edgecolors, shade=False)
 
+    # Axis formatting
     pl.axis('scaled')
     ax.invert_zaxis()
-
     ax.set_xlabel('X', labelpad=2)
     ax.set_ylabel('Y', labelpad=2)
     ax.set_zlabel('Z', labelpad=2)
-
-    #cb = pl.colorbar(cm.ScalarMappable(norm=pl.Normalize(-1, 1), cmap=cm.jet),
-    #                  shrink=0.5, aspect=20, pad = 0.09, label=r"Density $(g cm^{-3})$", ax=ax)
 
     pl.show()
 
