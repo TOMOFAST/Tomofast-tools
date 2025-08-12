@@ -3,6 +3,12 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import struct
 import os
+from numba import jit
+
+# Constants for Haar forward and inverse transforms.
+SQRT2 = np.sqrt(2.0)
+INV_SQRT2 = 1.0 / np.sqrt(2.0)
+LOG2 = np.log(2.0)
 
 @dataclass
 class TomofastxSensit:
@@ -301,148 +307,111 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False, 
     return sensit
 
 #=========================================================================================
+@jit(nopython=True, cache=True)
 def Haar3D(s, n1, n2, n3):
     """
     Forward Haar wavelet transform.
     """
-
+    
+    dims = np.array([n1, n2, n3])
+    
     for ic in range(3):
-        if ic == 0:
-            n_scale = int(np.log(float(n1)) / np.log(2.))
-            L = n1
-        elif ic == 1:
-            n_scale = int(np.log(float(n2)) / np.log(2.))
-            L = n2
-        else:
-            n_scale = int(np.log(float(n3)) / np.log(2.))
-            L = n3
-
+        L = dims[ic]
+        n_scale = int(np.log2(L))
+        
         for istep in range(1, n_scale + 1):
-            step_incr = 2 ** istep
-            ngmin = int(step_incr / 2) + 1
-            ngmax = ngmin + int((L - ngmin) / step_incr) * step_incr
-            ng = int((ngmax - ngmin) / step_incr) + 1
-            step2 = step_incr
-
-            #---------------------------------------------------
-            # Predict.
+            step_incr = 1 << istep
+            half_step = step_incr >> 1
+            
+            ngmin = half_step + 1
+            ngmax = ngmin + ((L - ngmin) // step_incr) * step_incr
+            ng = (ngmax - ngmin) // step_incr + 1
+            
+            # Combined operations in single loop
             ig = ngmin - 1
             il = 0
             for i in range(ng):
                 if ic == 0:
-                    s[ig, 0:n2, 0:n3] = s[ig, 0:n2, 0:n3] - s[il, 0:n2, 0:n3]
+                    # All operations for axis 0
+                    for j in range(n2):
+                        for k in range(n3):
+                            s[ig, j, k] -= s[il, j, k]
+                            s[il, j, k] += s[ig, j, k] * 0.5
+                            s[il, j, k] *= SQRT2
+                            s[ig, j, k] *= INV_SQRT2
                 elif ic == 1:
-                    s[0:n1, ig, 0:n3] = s[0:n1, ig, 0:n3] - s[0:n1, il, 0:n3]
+                    # All operations for axis 1
+                    for j in range(n1):
+                        for k in range(n3):
+                            s[j, ig, k] -= s[j, il, k]
+                            s[j, il, k] += s[j, ig, k] * 0.5
+                            s[j, il, k] *= SQRT2
+                            s[j, ig, k] *= INV_SQRT2
                 else:
-                    s[0:n1, 0:n2, ig] = s[0:n1, 0:n2, ig] - s[0:n1, 0:n2, il]
-
-                il = il + step2
-                ig = ig + step2
-
-            #---------------------------------------------------
-            # Update.
-            ig = ngmin - 1
-            il = 0
-            for i in range(ng):
-                if ic == 0:
-                    s[il, 0:n2, 0:n3] = s[il, 0:n2, 0:n3] + s[ig, 0:n2, 0:n3] / 2.
-                elif ic == 1:
-                    s[0:n1, il, 0:n3] = s[0:n1, il, 0:n3] + s[0:n1, ig, 0:n3] / 2.
-                else:
-                    s[0:n1, 0:n2, il] = s[0:n1, 0:n2, il] + s[0:n1, 0:n2, ig] / 2.
-
-                il = il + step2
-                ig = ig + step2
-
-            #---------------------------------------------------
-            # Normalization.
-            ig = ngmin - 1
-            il = 0
-            for i in range(ng):
-                if ic == 0:
-                    s[il, 0:n2, 0:n3] = s[il, 0:n2, 0:n3] * np.sqrt(2.)
-                    s[ig, 0:n2, 0:n3] = s[ig, 0:n2, 0:n3] / np.sqrt(2.)
-                elif ic == 1:
-                    s[0:n1, il, 0:n3] = s[0:n1, il, 0:n3] * np.sqrt(2.)
-                    s[0:n1, ig, 0:n3] = s[0:n1, ig, 0:n3] / np.sqrt(2.)
-                else:
-                    s[0:n1, 0:n2, il] = s[0:n1, 0:n2, il] * np.sqrt(2.)
-                    s[0:n1, 0:n2, ig] = s[0:n1, 0:n2, ig] / np.sqrt(2.)
-
-                il = il + step2
-                ig = ig + step2
+                    # All operations for axis 2
+                    for j in range(n1):
+                        for k in range(n2):
+                            s[j, k, ig] -= s[j, k, il]
+                            s[j, k, il] += s[j, k, ig] * 0.5
+                            s[j, k, il] *= SQRT2
+                            s[j, k, ig] *= INV_SQRT2
+                
+                il += step_incr
+                ig += step_incr
 
 #=========================================================================================
+@jit(nopython=True, cache=True)
 def iHaar3D(s, n1, n2, n3):
     """
-    Inverse Haar wavelet transform.
+    Numba optimized inverse Haar transform.
     """
-
+    
     for ic in range(3):
         if ic == 0:
-            n_scale = int(np.log(float(n1)) / np.log(2.))
+            n_scale = int(np.log(float(n1)) / LOG2)
             L = n1
         elif ic == 1:
-            n_scale = int(np.log(float(n2)) / np.log(2.))
+            n_scale = int(np.log(float(n2)) / LOG2)
             L = n2
         else:
-            n_scale = int(np.log(float(n3)) / np.log(2.))
+            n_scale = int(np.log(float(n3)) / LOG2)
             L = n3
 
-        for istep in reversed(range(1, n_scale + 1)):
+        for istep in range(n_scale, 0, -1):  # Reversed range for inverse
             step_incr = 2 ** istep
             ngmin = int(step_incr / 2) + 1
             ngmax = ngmin + int((L - ngmin) / step_incr) * step_incr
             ng = int((ngmax - ngmin) / step_incr) + 1
-            step2 = step_incr
 
-            #---------------------------------------------------
-            # Normalization.
+            # Combined operations in reverse order
             ig = ngmin - 1
             il = 0
             for i in range(ng):
                 if ic == 0:
-                    s[il, 0:n2, 0:n3] = s[il, 0:n2, 0:n3] / np.sqrt(2.)
-                    s[ig, 0:n2, 0:n3] = s[ig, 0:n2, 0:n3] * np.sqrt(2.)
+                    for j in range(n2):
+                        for k in range(n3):
+                            # Inverse order: Normalize, Update, Predict
+                            s[il, j, k] *= INV_SQRT2  # Normalize
+                            s[ig, j, k] *= SQRT2
+                            s[il, j, k] -= s[ig, j, k] * 0.5  # Update
+                            s[ig, j, k] += s[il, j, k]        # Predict
                 elif ic == 1:
-                    s[0:n1, il, 0:n3] = s[0:n1, il, 0:n3] / np.sqrt(2.)
-                    s[0:n1, ig, 0:n3] = s[0:n1, ig, 0:n3] * np.sqrt(2.)
+                    for j in range(n1):
+                        for k in range(n3):
+                            s[j, il, k] *= INV_SQRT2
+                            s[j, ig, k] *= SQRT2
+                            s[j, il, k] -= s[j, ig, k] * 0.5
+                            s[j, ig, k] += s[j, il, k]
                 else:
-                    s[0:n1, 0:n2, il] = s[0:n1, 0:n2, il] / np.sqrt(2.)
-                    s[0:n1, 0:n2, ig] = s[0:n1, 0:n2, ig] * np.sqrt(2.)
-
-                il = il + step2
-                ig = ig + step2
-
-            #---------------------------------------------------
-            # Update.
-            ig = ngmin - 1
-            il = 0
-            for i in range(ng):
-                if ic == 0:
-                    s[il, 0:n2, 0:n3] = s[il, 0:n2, 0:n3] - s[ig, 0:n2, 0:n3] / 2.
-                elif ic == 1:
-                    s[0:n1, il, 0:n3] = s[0:n1, il, 0:n3] - s[0:n1, ig, 0:n3] / 2.
-                else:
-                    s[0:n1, 0:n2, il] = s[0:n1, 0:n2, il] - s[0:n1, 0:n2, ig] / 2.
-
-                il = il + step2
-                ig = ig + step2
-
-            #---------------------------------------------------
-            # Predict.
-            ig = ngmin - 1
-            il = 0
-            for i in range(ng):
-                if ic == 0:
-                    s[ig, 0:n2, 0:n3] = s[ig, 0:n2, 0:n3] + s[il, 0:n2, 0:n3]
-                elif ic == 1:
-                    s[0:n1, ig, 0:n3] = s[0:n1, ig, 0:n3] + s[0:n1, il, 0:n3]
-                else:
-                    s[0:n1, 0:n2, ig] = s[0:n1, 0:n2, ig] + s[0:n1, 0:n2, il]
-
-                il = il + step2
-                ig = ig + step2
+                    for j in range(n1):
+                        for k in range(n2):
+                            s[j, k, il] *= INV_SQRT2
+                            s[j, k, ig] *= SQRT2
+                            s[j, k, il] -= s[j, k, ig] * 0.5
+                            s[j, k, ig] += s[j, k, il]
+                
+                il += step_incr
+                ig += step_incr
 
 #=========================================================================================
 def test_write_sensit_to_tomofastx():
