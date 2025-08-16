@@ -310,7 +310,7 @@ def load_sensit_from_tomofastx(sensit_path, nbproc, type="grav", verbose=False, 
 @jit(nopython=True, cache=True)
 def Haar3D(s, n1, n2, n3):
     """
-    Forward Haar wavelet transform.
+    Numba optimized forward Haar transform.
     """
     
     dims = np.array([n1, n2, n3])
