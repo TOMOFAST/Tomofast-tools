@@ -68,7 +68,6 @@ J_indices, K_indices, I_indices = np.meshgrid(j_indices[:-1], k_indices[:-1], i_
 X = X.flatten()
 Y = Y.flatten()
 Z = Z.flatten()
-values = np.zeros_like(Z)
 
 X1 = X - dx/2
 X2 = X + dx/2
@@ -89,4 +88,5 @@ line_data = np.array([X1, X2, Y1, Y2, Z1, Z2,
 
 # Writing the file / Ecrire le fichier. 
 write_tomofast_model_grid(line_data)
+
 
