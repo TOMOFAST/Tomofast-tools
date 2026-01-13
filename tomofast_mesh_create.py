@@ -41,7 +41,7 @@ def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
         # Write the header.
         file.write("%d\n" % num_cells)
 
-        np.savetxt(file, line_data, fmt="%f %f %f %f %f %f %f %d %d %d")
+        np.savetxt(file, line_data, fmt="%f %f %f %f %f %f %d %d %d")
     file.close()
 
 # Creating the mesh. 
@@ -84,8 +84,9 @@ Y2 = Y2 - np.min(Y2) + y_min + dy
 Z1 = Z1 - np.min(Z1) + z_min
 Z2 = Z2 - np.min(Z2) + z_min + dz
 
-line_data = np.array([X1, X2, Y1, Y2, Z1, Z2, values,
+line_data = np.array([X1, X2, Y1, Y2, Z1, Z2,
                       I_indices.flatten(), J_indices.flatten(), K_indices.flatten()]).T
 
 # Writing the file / Ecrire le fichier. 
 write_tomofast_model_grid(line_data)
+
