@@ -11,19 +11,21 @@ import matplotlib.pyplot as plt
 def write_model_grid(filename, nx, ny, nz, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, model_values):
     '''
     Writes the Tomofast-x model grid.
+    Writes grid geometry to filename and model values to filename with '-values' suffix.
     '''
     # Cell sizes.
     dx = int((Xmax - Xmin) / nx)
     dy = int((Ymax - Ymin) / ny)
     dz = int((Zmax - Zmin) / nz)
-
     print("dx, dy, dz =", dx, dy, dz)
-
     nelements = nx * ny * nz
 
-    grid = np.zeros((nelements, 10))
-    ind = 0
+    # Grid geometry without model values.
+    grid = np.zeros((nelements, 9))
+    # Model values stored separatel.y
+    values = np.zeros(nelements)
 
+    ind = 0
     for k in range(nz):
         Z1 = Zmin + k * dz
         Z2 = Z1 + dz
@@ -33,23 +35,35 @@ def write_model_grid(filename, nx, ny, nz, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, m
             for i in range(nx):
                 X1 = Xmin + i * dx
                 X2 = X1 + dx
-
                 grid[ind, 0] = X1
                 grid[ind, 1] = X2
                 grid[ind, 2] = Y1
                 grid[ind, 3] = Y2
                 grid[ind, 4] = Z1
                 grid[ind, 5] = Z2
-                grid[ind, 6] = model_values[k, j, i]
-
-                grid[ind, 7] = i + 1
-                grid[ind, 8] = j + 1
-                grid[ind, 9] = k + 1
-
+                grid[ind, 6] = i + 1
+                grid[ind, 7] = j + 1
+                grid[ind, 8] = k + 1
+                values[ind] = model_values[k, j, i]
                 ind = ind + 1
 
-    # Save model grid to file.
-    np.savetxt(filename, grid, delimiter=' ', fmt="%f %f %f %f %f %f %f %d %d %d", header=str(nelements), comments='')
+    # Save grid geometry to file.
+    np.savetxt(filename, grid, delimiter=' ',
+               fmt="%f %f %f %f %f %f %d %d %d",
+               header=str(nelements), comments='')
+
+    # Create model values filename by inserting '-values' before extension.
+    import os
+    base, ext = os.path.splitext(filename)
+    model_filename = base + '-values' + ext
+
+    # Save model values to separate file.
+    np.savetxt(model_filename, values, delimiter=' ',
+               fmt="%f",
+               header=str(nelements), comments='')
+
+    print(f"Grid geometry saved to: {filename}")
+    print(f"Model values saved to: {model_filename}")
 
 #=====================================================================================================
 def write_data_grid(filename, cell_size, Xmin, Xmax, Ymin, Ymax, elevation):
