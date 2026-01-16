@@ -37,12 +37,9 @@ def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     num_cells = line_data.shape[0]
     print("num_cells = ", num_cells)
 
-    with open(filename, "w") as file:
-        # Write the header.
-        file.write("%d\n" % num_cells)
-
-        np.savetxt(file, line_data, fmt="%f %f %f %f %f %f %d %d %d")
-    file.close()
+    np.savetxt(filename, line_data, delimiter=' ',
+               fmt="%f %f %f %f %f %f %d %d %d",
+               header=str(num_cells), comments='')
 
 # Creating the mesh. 
 # Creer la grille.
@@ -88,5 +85,4 @@ line_data = np.array([X1, X2, Y1, Y2, Z1, Z2,
 
 # Writing the file / Ecrire le fichier. 
 write_tomofast_model_grid(line_data)
-
 
