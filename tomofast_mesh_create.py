@@ -20,14 +20,14 @@ nx = 9
 ny = 10
 nz = 11
 
-# ===============================================================
+# ====================================================================
 # Making and writing the mesh (nothing to change beyond this point).
 # Creation et ecriture de la grille (rien à changer à partir d'ici).
-# ===============================================================
+# ====================================================================
 
 def write_tomofast_model_grid(line_data, output_folder="tomofast_grids"):
     """
-    A funxtion to write the model and grid for Tomofast-x.
+    A function to write the grid for Tomofast-x.
     Une fonction pour ecrire le model et la grille pour Tomofast-x.
     """
 
@@ -51,13 +51,13 @@ x_vect = np.linspace(x_min, x_max, nx)
 y_vect = np.linspace(y_min, y_max, ny)
 z_vect = np.linspace(z_min, z_max, nz)
 
-dx = (x_max-x_min)/(nx-1)
-dy = (y_max-y_min)/(ny-1)
-dz = (z_max-z_min)/(nz-1)
+dx = (x_max - x_min) / (nx - 1)
+dy = (y_max - y_min) / (ny - 1)
+dz = (z_max - z_min) / (nz - 1)
 
-i_indices = np.arange(1, nx+1)
-j_indices = np.arange(1, ny+1)
-k_indices = np.arange(1, nz+1)
+i_indices = np.arange(1, nx + 1)
+j_indices = np.arange(1, ny + 1)
+k_indices = np.arange(1, nz + 1)
 
 Y, Z, X = np.meshgrid(y_vect[:-1], z_vect[:-1], x_vect[:-1])
 J_indices, K_indices, I_indices = np.meshgrid(j_indices[:-1], k_indices[:-1], i_indices[:-1])
@@ -66,12 +66,12 @@ X = X.flatten()
 Y = Y.flatten()
 Z = Z.flatten()
 
-X1 = X - dx/2
-X2 = X + dx/2
-Y1 = Y - dy/2
-Y2 = Y + dy/2
-Z1 = Z - dz/2
-Z2 = Z + dz/2
+X1 = X - dx / 2
+X2 = X + dx / 2
+Y1 = Y - dy / 2
+Y2 = Y + dy / 2
+Z1 = Z - dz / 2
+Z2 = Z + dz / 2
 
 X1 = X1 - np.min(X1) + x_min
 X2 = X2 - np.min(X2) + x_min + dx
