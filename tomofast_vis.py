@@ -194,32 +194,19 @@ def plot_field(field, title):
 
 #=====================================================================================================
 def main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated,
-        slice_index=1, slice_dim=0, palette='viridis', draw_true_model=True):
+         filename_model_synth='',
+        slice_index=1, slice_dim=0, palette='viridis'):
     print('Started tomofast_vis.')
-
-    #----------------------------------------------------------------------------------
-    # Setting the file paths and constants.
-    #----------------------------------------------------------------------------------
-
-    # Path to input model grid (modelGrid.grav.file parameter in the Parfile).
-    #filename_model_grid = '../Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho.txt'
-
-    # Path to the output model after inversion.
-    #filename_model_final = '../Tomofast-x/output/mansf_slice/model/grav_final_model_full.txt'
-
-    # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
-    #filename_data_observed = '../Tomofast-x/output/mansf_slice/data/grav_calc_read_data.txt'
-
-    # Path to calculated data after inversion.
-    #filename_data_calculated = '../Tomofast-x/output/mansf_slice/data/grav_calc_final_data.txt'
 
     #----------------------------------------------------------------------------------
     # Reading data.
     #----------------------------------------------------------------------------------
 
     # Reading the model grid.
-    model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5,6), skiprows=1)
-    model_indexes = np.loadtxt(filename_model_grid, dtype=int, usecols=(7,8,9), skiprows=1)
+    model_grid = np.loadtxt(filename_model_grid, dtype=float, usecols=(0,1,2,3,4,5), skiprows=1)
+    model_indexes = np.loadtxt(filename_model_grid, dtype=int, usecols=(6,7,8), skiprows=1)
+    if (filename_model_synth):
+        model_synth = np.loadtxt(filename_model_synth, dtype=float, usecols=(0), skiprows=1)
 
     # Revert Z-axis.
     model_grid[:, 4] = - model_grid[:, 4]
@@ -243,9 +230,6 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
 
     model_grid_slice = model_grid[slice_filter]
 
-    # When available the true model is stored in the grid file (7th column).
-    true_model_slice = model_grid_slice[:, 6]
-
     # Grid slice dimensions.
     grid_slice_x_min = np.min(model_grid_slice[:, 0:2])
     grid_slice_x_max = np.max(model_grid_slice[:, 0:2])
@@ -257,11 +241,11 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
 
     # Remove not-needed columns.
     if (slice_dim == 0):
-        model_grid_slice_2d = np.delete(model_grid_slice, [0, 1, 6], axis=1)
+        model_grid_slice_2d = np.delete(model_grid_slice, [0, 1], axis=1)
     elif (slice_dim == 1):
-        model_grid_slice_2d = np.delete(model_grid_slice, [2, 3, 6], axis=1)
+        model_grid_slice_2d = np.delete(model_grid_slice, [2, 3], axis=1)
     elif (slice_dim == 2):
-        model_grid_slice_2d = np.delete(model_grid_slice, [4, 5, 6], axis=1)
+        model_grid_slice_2d = np.delete(model_grid_slice, [4, 5], axis=1)
 
     model_final_slice = model_final[slice_filter]
 
@@ -270,8 +254,10 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
     #----------------------------------------------------------------------------------
     grid = model_grid_slice_2d
 
-    if (draw_true_model):
-        draw_model(grid, true_model_slice, "True model.", palette)
+    if (filename_model_synth):
+        model_synth_slice = model_synth[slice_filter]
+        draw_model(grid, model_synth_slice, "True model.", palette)
+
     draw_model(grid, model_final_slice, "Final model.", palette)
 
     #----------------------------------------------------------------------------------
@@ -305,4 +291,22 @@ def main(filename_model_grid, filename_model_final, filename_data_observed, file
 
 #=============================================================================
 if __name__ == "__main__":
-    main()
+
+    # An example usage using mansf_slice example from Tomofast-x repo.
+
+    # Path to input model grid (modelGrid.grav.file parameter in the Parfile).
+    filename_model_grid = '../Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho-grid.txt'
+
+    # Path to input synthetic model (forward.data.grav.syntheticModelFile parameter in the Parfile).
+    filename_model_synth = '../Tomofast-x/data/gravmag/mansf_slice/true_model_grav_3litho-values.txt'
+
+    # Path to the output model after inversion.
+    filename_model_final = '../Tomofast-x/output/mansf_slice/model/grav_final_model_full.txt'
+
+    # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
+    filename_data_observed = '../Tomofast-x/output/mansf_slice/data/grav_calc_synth_data.txt'
+
+    # Path to calculated data after inversion.
+    filename_data_calculated = '../Tomofast-x/output/mansf_slice/data/grav_calc_final_data.txt'
+
+    main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated, filename_model_synth)
