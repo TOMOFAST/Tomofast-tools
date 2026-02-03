@@ -303,10 +303,10 @@ if __name__ == "__main__":
     # Path to the output model after inversion.
     filename_model_final = '../Tomofast-x/output/mansf_slice/model/grav_final_model_full.txt'
 
-    # Path to observed data (forward.data.grav.dataValuesFile parameter in the Parfile).
-    filename_data_observed = '../Tomofast-x/output/mansf_slice/data/grav_calc_synth_data.txt'
+    # Path to observed data.
+    filename_data_observed = '../Tomofast-x/output/mansf_slice/data/grav_observed.txt'
 
     # Path to calculated data after inversion.
-    filename_data_calculated = '../Tomofast-x/output/mansf_slice/data/grav_calc_final_data.txt'
+    filename_data_calculated = '../Tomofast-x/output/mansf_slice/data/grav_final.txt'
 
     main(filename_model_grid, filename_model_final, filename_data_observed, filename_data_calculated, filename_model_synth)
