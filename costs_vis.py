@@ -2,6 +2,9 @@
 A script for visualisation of Tomofast-x inversion cost evolution.
 
 Author: Jeremie Giraud
+
+Note:   Visualisation for the cost of the 3 components of the cross-gradient separately is not implemented. 
+        It is currently only for the sum of all three. 
 '''
 
 import numpy as np
@@ -55,7 +58,7 @@ def detect_inversion_type(df):
 
 #==================================================================================================
 # Calculate total cost from all components.
-def calculate_total_cost(df, data_types):
+def calculate_costs(df, data_types):
     '''
     Calculate total cost and component totals.
     
@@ -63,7 +66,6 @@ def calculate_total_cost(df, data_types):
         df: DataFrame with total_cost column added
         component_totals: dict of component name to Series
     '''
-    df['total_cost'] = 0
     component_totals = {}
 
     #----------------------------------------------------------------------------------
@@ -72,7 +74,6 @@ def calculate_total_cost(df, data_types):
     data_sum = sum(df[f'data_cost_{dtype}'] for dtype in data_types if has_data(df, f'data_cost_{dtype}'))
     if isinstance(data_sum, pd.Series):
         component_totals['Data'] = data_sum
-        df['total_cost'] += data_sum
 
     #----------------------------------------------------------------------------------
     # Model cost.
@@ -81,7 +82,6 @@ def calculate_total_cost(df, data_types):
     if model_cols:
         model_sum = sum(df[col] for col in model_cols)
         component_totals['Model'] = model_sum
-        df['total_cost'] += model_sum
 
     #----------------------------------------------------------------------------------
     # ADMM cost.
@@ -90,7 +90,6 @@ def calculate_total_cost(df, data_types):
     if admm_cols:
         admm_sum = sum(df[col] for col in admm_cols)
         component_totals['ADMM'] = admm_sum
-        df['total_cost'] += admm_sum
 
     #----------------------------------------------------------------------------------
     # Gradient damping cost.
@@ -103,10 +102,9 @@ def calculate_total_cost(df, data_types):
                 gradient_sum += df[col]
     if isinstance(gradient_sum, pd.Series) and gradient_sum.abs().max() > 0:
         component_totals['Gradient'] = gradient_sum
-        df['total_cost'] += gradient_sum
 
     #----------------------------------------------------------------------------------
-    # Cross-gradient cost (joint inversion only).
+    # Cross-gradient cost.
     #----------------------------------------------------------------------------------
     cross_grad_sum = 0
     for direction in ['x', 'y', 'z']:
@@ -115,7 +113,6 @@ def calculate_total_cost(df, data_types):
             cross_grad_sum += df[col]
     if isinstance(cross_grad_sum, pd.Series) and cross_grad_sum.abs().max() > 0:
         component_totals['Cross-grad'] = cross_grad_sum
-        df['total_cost'] += cross_grad_sum
 
     #----------------------------------------------------------------------------------
     # Clustering cost.
@@ -127,7 +124,6 @@ def calculate_total_cost(df, data_types):
             clustering_sum += df[col]
     if isinstance(clustering_sum, pd.Series) and clustering_sum.abs().max() > 0:
         component_totals['Clustering'] = clustering_sum
-        df['total_cost'] += clustering_sum
 
     return df, component_totals
 
@@ -220,8 +216,35 @@ def draw_gradient_damping(ax, df, it, data_types, data_labels):
     ax.legend(fontsize=8, ncol=2 if len(data_types) > 1 else 1)
 
 #==================================================================================================
+# Draw cross-gradient or clustering panel.
+def draw_clust_or_xgrad_cost(ax, it, component_totals):
+    """
+    Draw Cross-gradient or Clustering cost evolution if present.
+    """
+    plotted = False
+
+    if 'Cross-grad' in component_totals:
+        ax.plot(it, component_totals['Cross-grad'],
+                'o-', linewidth=1.5, markersize=3,
+                color='#9B5DE5', label='Cross-gradient')
+        plotted = True
+
+    if 'Clustering' in component_totals:
+        ax.plot(it, component_totals['Clustering'],
+                's-', linewidth=1.5, markersize=3,
+                color='#00BBF9', label='Clustering')
+        plotted = True
+
+    if plotted:
+        ax.set_title("Additional Regularization Terms", fontsize=12, fontweight='bold')
+        ax.set_yscale('log')
+        ax.legend(fontsize=9)
+    else:
+        ax.axis("off")  # Hide if nothing to show
+
+#==================================================================================================
 # Draw cost components comparison panel.
-def draw_cost_components(ax, df, it, component_totals):
+def draw_cost_components(ax, it, component_totals):
     '''
     Draw comparison of all cost components.
     '''
@@ -239,47 +262,9 @@ def draw_cost_components(ax, df, it, component_totals):
             ax.plot(it, values, '-', linewidth=2, label=name,
                     color=component_colors.get(name, 'gray'))
 
-    ax.plot(it, df['total_cost'], 'k--', linewidth=2, label='Total', alpha=0.7)
-    ax.set_title("Cost Components Comparison", fontsize=12, fontweight='bold')
+    ax.set_title("Cost Components Comparison (no weights from cost function)", fontsize=12, fontweight='bold')
     ax.set_yscale('log')
     ax.legend(fontsize=9, ncol=2)
-
-#==================================================================================================
-# Draw convergence panel.
-def draw_convergence(ax, df, it):
-    '''
-    Draw the relative change per iteration (convergence diagnostic).
-    '''
-    relative_change = np.abs(df['total_cost'].diff()) / df['total_cost'].shift(1) * 100
-
-    ax.plot(it[1:], relative_change[1:], 'ko-', linewidth=1.5, markersize=3)
-    ax.axhline(y=1, color='red', linestyle='--', alpha=0.7, linewidth=1, label='1% threshold')
-    ax.axhline(y=0.1, color='orange', linestyle='--', alpha=0.7, linewidth=1, label='0.1% threshold')
-    ax.set_title("Convergence: Relative Change (%)", fontsize=12, fontweight='bold')
-    ax.set_yscale('log')
-    ax.legend(fontsize=9)
-    ax.set_ylim(bottom=0.001)
-
-    return relative_change
-
-#==================================================================================================
-# Print convergence summary.
-def print_convergence_summary(inversion_type, n_iter, initial_cost, final_cost, final_change):
-    '''
-    Print summary statistics to console.
-    '''
-    reduction = (1 - final_cost / initial_cost) * 100
-
-    print("\n" + "=" * 50)
-    print("CONVERGENCE SUMMARY")
-    print("=" * 50)
-    print(f"Inversion type: {inversion_type}")
-    print(f"Total iterations: {n_iter}")
-    print(f"Initial total cost: {initial_cost:.4e}")
-    print(f"Final total cost: {final_cost:.4e}")
-    print(f"Cost reduction: {reduction:.2f}%")
-    print(f"Final relative change: {final_change:.4f}%")
-    print(f"Converged (< 0.1% change): {'Yes ✓' if final_change < 0.1 else 'No - consider more iterations'}")
 
 #==================================================================================================
 # Main function for cost evolution visualisation.
@@ -321,13 +306,16 @@ def main(filename_costs, filename_output='cost_evolution.png', save_figure=False
     #----------------------------------------------------------------------------------
     # Calculate total cost.
     #----------------------------------------------------------------------------------
-    df, component_totals = calculate_total_cost(df, data_types)
+    df, component_totals = calculate_costs(df, data_types)
 
     #----------------------------------------------------------------------------------
     # Create figure.
     #----------------------------------------------------------------------------------
     fig, axes = pl.subplots(2, 3, figsize=(16, 10), sharex=True)
     axes = axes.ravel()
+
+    # Panel 5 not used. 
+    axes[5].axis("off")
 
     #----------------------------------------------------------------------------------
     # Draw panels.
@@ -336,13 +324,13 @@ def main(filename_costs, filename_output='cost_evolution.png', save_figure=False
     draw_model_cost(axes[1], df, it, data_types, data_labels, data_colors)
     draw_admm_cost(axes[2], df, it, data_types, data_labels, data_colors)
     draw_gradient_damping(axes[3], df, it, data_types, data_labels)
-    draw_cost_components(axes[4], df, it, component_totals)
-    relative_change = draw_convergence(axes[5], df, it)
+    draw_cost_components(axes[4], it, component_totals)
+    draw_clust_or_xgrad_cost(axes[5], it, component_totals)
 
     #----------------------------------------------------------------------------------
     # Apply grids to all axes.
     #----------------------------------------------------------------------------------
-    for ax in axes:
+    for ax in axes[:-1]:
         apply_grid(ax)
 
     #----------------------------------------------------------------------------------
@@ -360,25 +348,6 @@ def main(filename_costs, filename_output='cost_evolution.png', save_figure=False
     fig.tight_layout(rect=[0, 0.05, 1, 0.96])
 
     #----------------------------------------------------------------------------------
-    # Summary statistics box.
-    #----------------------------------------------------------------------------------
-    initial_cost = df['total_cost'].iloc[0]
-    final_cost = df['total_cost'].iloc[-1]
-    reduction = (1 - final_cost / initial_cost) * 100
-    n_iter = int(it.max())
-    final_change = relative_change.iloc[-1]
-
-    summary = (f"Type: {inversion_type}\n"
-               f"Iterations: {n_iter}\n"
-               f"Initial cost: {initial_cost:.2e}\n"
-               f"Final cost: {final_cost:.2e}\n"
-               f"Reduction: {reduction:.1f}%\n"
-               f"Final Δ: {final_change:.3f}%")
-
-    fig.text(0.01, 0.01, summary, fontsize=9, family='monospace',
-             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.9, edgecolor='gray'))
-
-    #----------------------------------------------------------------------------------
     # Save figure.
     #----------------------------------------------------------------------------------
     if save_figure:
@@ -388,10 +357,6 @@ def main(filename_costs, filename_output='cost_evolution.png', save_figure=False
     pl.show()
     pl.close(pl.gcf())
 
-    #----------------------------------------------------------------------------------
-    # Print summary.
-    #----------------------------------------------------------------------------------
-    print_convergence_summary(inversion_type, n_iter, initial_cost, final_cost, final_change)
 
 #=============================================================================
 if __name__ == "__main__":
